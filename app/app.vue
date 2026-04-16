@@ -66,7 +66,7 @@
             @click="manualEntry"
             class="w-full py-4 px-6 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 hover:border-yellow-500/50 transition-all text-sm font-semibold text-slate-300"
           >
-            Forgot ID? Enter Manually
+            Forgot ID card? Enter Manually
           </button>
         </div>
 
@@ -156,19 +156,59 @@
           v-if="
             step === 'found' || (step === 'result' && bindStatus === 'success')
           "
-          class="text-center p-10 bg-yellow-500 rounded-3xl shadow-[0_20px_50px_rgba(234,179,8,0.3)] animate-bounce-short"
+          class="space-y-6"
         >
-          <span class="text-6xl mb-4 block">🎊</span>
-          <h2 class="text-green-950 text-3xl font-black italic uppercase">
-            Welcome!
-          </h2>
-          <p class="text-green-900 font-bold text-xl mt-2">
-            {{ student?.firstname }}
-          </p>
-          <div
-            class="mt-6 py-2 px-4 bg-green-900/10 rounded-full inline-block text-green-900 text-xs font-bold uppercase tracking-tighter"
-          >
-            Positioned in Queue
+          <!-- HEADER -->
+          <div class="text-center">
+            <h2 class="text-2xl font-bold text-yellow-400">
+              Welcome, {{ student?.firstname }}
+            </h2>
+            <p class="text-slate-400 text-sm mt-1">
+              Select your concern to proceed
+            </p>
+          </div>
+
+          <!-- OPTIONS -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Account Problem -->
+            <button
+              @click="selectService('Account Problem')"
+              class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-400 hover:bg-yellow-500/10 transition-all text-left group"
+            >
+              <div class="text-2xl mb-2">🔐</div>
+              <p class="font-bold text-sm">Account Problem</p>
+              <p class="text-xs text-slate-400">Login / access issues</p>
+            </button>
+
+            <!-- ID Printing -->
+            <button
+              @click="selectService('ID Printing')"
+              class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-400 hover:bg-yellow-500/10 transition-all text-left group"
+            >
+              <div class="text-2xl mb-2">🪪</div>
+              <p class="font-bold text-sm">ID Printing</p>
+              <p class="text-xs text-slate-400">Request new / reprint ID</p>
+            </button>
+
+            <!-- Clearance -->
+            <button
+              @click="selectService('Clearance Signing')"
+              class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-400 hover:bg-yellow-500/10 transition-all text-left group"
+            >
+              <div class="text-2xl mb-2">📄</div>
+              <p class="font-bold text-sm">Clearance Signing</p>
+              <p class="text-xs text-slate-400">Process clearance</p>
+            </button>
+
+            <!-- Inquiry -->
+            <button
+              @click="selectService('Inquiry')"
+              class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-yellow-400 hover:bg-yellow-500/10 transition-all text-left group"
+            >
+              <div class="text-2xl mb-2">❓</div>
+              <p class="font-bold text-sm">Inquiry</p>
+              <p class="text-xs text-slate-400">General questions</p>
+            </button>
           </div>
         </div>
       </div>
@@ -331,11 +371,18 @@ const resetAll = () => {
   bindStatus.value = "";
 };
 
-// AUTO RESET AFTER RESULT
-const autoReset = () => {
-  setTimeout(() => {
-    resetAll();
-  }, 2000);
+const selectedService = ref("");
+
+const selectService = (service) => {
+  selectedService.value = service;
+
+  // 👉 generate queue AFTER selecting service
+  generateQueue();
+
+  // (optional) you can send to backend
+  // await $fetch('/api/queue', { method: 'POST', body: { service, student } })
+
+  autoReset();
 };
 </script>
 

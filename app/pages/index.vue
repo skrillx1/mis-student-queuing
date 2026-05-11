@@ -60,7 +60,7 @@
               @click="manualEntry"
               class="w-full bg-white/5 hover:bg-white/10 py-3 rounded-xl text-sm font-medium"
             >
-              Enter Student ID Manually
+              Enter ID Number Manually
             </button>
 
             <button
@@ -236,12 +236,12 @@
             <input
               v-model="form.studid"
               placeholder="Student ID"
-              class="form-input md:col-span-2"
+              class="form-input"
             />
             <input
               v-model="form.course"
               placeholder="Course"
-              class="form-input md:col-span-2"
+              class="form-input"
             />
             <div class="md:col-span-2 border-t border-white/5 pt-2 mt-2">
               <p class="text-xs text-slate-500">Emergency Contact</p>

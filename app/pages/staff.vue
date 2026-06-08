@@ -32,22 +32,6 @@
 
         <div class="flex gap-1.5 ml-auto md:ml-0">
           <button @click="fetchQueues" class="btn-gold shadow-sm">Apply</button>
-          <button @click="fetchQueues" class="btn-muted">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121 12h-1.5"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </div>

@@ -2,21 +2,33 @@ import { pool } from "../../utils/db";
 
 export default defineEventHandler(async () => {
   try {
-    const result = await pool.query(
-      `SELECT ticketnumber
-       FROM queue_tickets
-       ORDER BY id DESC
-       LIMIT 2`,
+    const servingResult = await pool.query(
+      `
+      SELECT ticketnumber
+      FROM queue_tickets
+      WHERE status = 'serving'
+      ORDER BY id DESC
+      LIMIT 1
+      `,
     );
 
-    const rows = result.rows;
+    const waitingResult = await pool.query(
+      `
+      SELECT ticketnumber
+      FROM queue_tickets
+      WHERE status = 'waiting'
+      ORDER BY id ASC
+      LIMIT 1
+      `,
+    );
 
     return {
-      current: rows[0]?.ticketnumber || "---",
-      next: rows[1]?.ticketnumber || "---",
+      current: servingResult.rows[0]?.ticketnumber || "---",
+      next: waitingResult.rows[0]?.ticketnumber || "---",
     };
   } catch (err) {
     console.error(err);
+
     return {
       current: "---",
       next: "---",

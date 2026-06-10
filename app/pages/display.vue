@@ -248,12 +248,16 @@
 </template>
 
 <script setup>
+import { onMounted, onBeforeUnmount } from "vue";
+
+let eventSource = null;
 const current = ref("---");
 const next = ref("---");
 const history = ref([]);
 const currentTime = ref("");
 const isNew = ref(false);
 const audioUnlocked = ref(false);
+const lastAnnounced = ref(null);
 
 const updateClock = () => {
   const now = new Date();
@@ -286,16 +290,35 @@ const announceTicket = (number) => {
 const fetchQueue = async () => {
   try {
     const res = await $fetch("/api/queue/display");
-    if (res.current && res.current !== "---" && res.current !== current.value) {
+
+    const newCurrent = res.current || "---";
+
+    if (newCurrent !== current.value) {
       if (current.value !== "---") {
         history.value.unshift(current.value);
-        if (history.value.length > 5) history.value.pop();
+
+        if (history.value.length > 5) {
+          history.value.pop();
+        }
       }
+
       isNew.value = true;
-      setTimeout(() => (isNew.value = false), 8000);
-      if (audioUnlocked.value) announceTicket(res.current);
+
+      setTimeout(() => {
+        isNew.value = false;
+      }, 8000);
+
+      if (
+        audioUnlocked.value &&
+        newCurrent !== "---" &&
+        lastAnnounced.value !== newCurrent
+      ) {
+        lastAnnounced.value = newCurrent;
+        announceTicket(newCurrent);
+      }
     }
-    current.value = res.current || "---";
+
+    current.value = newCurrent;
     next.value = res.next || "---";
   } catch (err) {
     console.error("Monitor Error:", err);
@@ -308,12 +331,32 @@ const unlockAudio = () => {
   if (current.value !== "---") announceTicket(current.value);
 };
 
-onMounted(() => {
+onMounted(async () => {
   updateClock();
+
   setInterval(updateClock, 1000);
-  fetchQueue();
-  setInterval(fetchQueue, 3000);
+
+  await fetchQueue();
+
+  eventSource = new EventSource("/api/queue/events");
+
+  eventSource.onmessage = async (event) => {
+    const data = JSON.parse(event.data);
+
+    if (data.heartbeat) return;
+
+    await fetchQueue();
+  };
+
+  eventSource.onerror = () => {
+    console.log("SSE disconnected");
+  };
+
   window.speechSynthesis.getVoices();
+});
+
+onBeforeUnmount(() => {
+  eventSource?.close();
 });
 </script>
 

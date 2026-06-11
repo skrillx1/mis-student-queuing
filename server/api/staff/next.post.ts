@@ -1,16 +1,16 @@
 import { pool } from "../../utils/db";
+import { broadcastQueueUpdate } from "../../utils/queue-events";
 
 export default defineEventHandler(async () => {
-  // ✅ mark current serving as done FIRST
   await pool.query(`
     UPDATE queue_tickets
     SET status = 'done'
     WHERE status = 'serving'
   `);
 
-  // ✅ get next waiting
   const res = await pool.query(`
-    SELECT * FROM queue_tickets
+    SELECT *
+    FROM queue_tickets
     WHERE status = 'waiting'
     ORDER BY id ASC
     LIMIT 1
@@ -19,14 +19,24 @@ export default defineEventHandler(async () => {
   const ticket = res.rows[0];
 
   if (!ticket) {
-    return { current: "---" };
+    return {
+      current: "---",
+    };
   }
 
-  // ✅ mark as serving
   await pool.query(
-    `UPDATE queue_tickets SET status = 'serving' WHERE id = $1`,
+    `UPDATE queue_tickets
+     SET status = 'serving'
+     WHERE id = $1`,
     [ticket.id],
   );
 
-  return { current: ticket.ticketnumber };
+  broadcastQueueUpdate({
+    type: "next",
+    ticket: ticket.ticketnumber,
+  });
+
+  return {
+    current: ticket.ticketnumber,
+  };
 });

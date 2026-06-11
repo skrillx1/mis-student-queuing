@@ -1,4 +1,5 @@
 import { pool } from "../../utils/db";
+import { broadcastQueueUpdate } from "../../utils/queue-events";
 
 export default defineEventHandler(async (event) => {
   const { ticket } = await readBody(event);
@@ -10,5 +11,12 @@ export default defineEventHandler(async (event) => {
     [ticket],
   );
 
-  return { success: true };
+  broadcastQueueUpdate({
+    type: "done",
+    ticket,
+  });
+
+  return {
+    success: true,
+  };
 });

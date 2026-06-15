@@ -346,6 +346,13 @@ onMounted(async () => {
     if (data.heartbeat) return;
 
     await fetchQueue();
+
+    if (
+      audioUnlocked.value &&
+      (data.type === "recall" || data.type === "serving")
+    ) {
+      announceTicket(data.ticket);
+    }
   };
 
   eventSource.onerror = () => {

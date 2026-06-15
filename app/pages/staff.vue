@@ -313,8 +313,16 @@ const markDone = async (ticket) => {
   fetchQueues();
 };
 
+const fetchCurrentServing = async () => {
+  const res = await $fetch("/api/staff/current");
+  current.value = res.current || "---";
+};
+
 /* ================= INIT ================= */
-onMounted(fetchQueues);
+onMounted(async () => {
+  await fetchQueues();
+  await fetchCurrentServing();
+});
 </script>
 
 <style scoped>

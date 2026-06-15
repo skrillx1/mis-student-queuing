@@ -18,8 +18,9 @@ export default defineEventHandler(async (event) => {
   // });
 
   broadcastQueueUpdate({
-    type: "serving",
+    type: "recall",
     ticket,
+    timestamp: Date.now(),
   });
 
   return {

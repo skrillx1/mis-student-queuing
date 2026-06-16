@@ -89,10 +89,20 @@
                   </p>
                 </div>
               </div>
-              <span
-                class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-1 rounded"
-                >Active</span
-              >
+              <div class="flex gap-1.5">
+                <button
+                  @click="markDone(q.ticketnumber)"
+                  class="btn-action-done"
+                >
+                  Done
+                </button>
+                <button
+                  @click="recallTicket(q.ticketnumber)"
+                  class="btn-action-call"
+                >
+                  Recall
+                </button>
+              </div>
             </div>
           </div>
 
@@ -210,10 +220,6 @@
           <button @click="nextTicket" class="btn-emerald shadow-sm">
             <span>SERVE NEXT TICKET</span>
           </button>
-
-          <button @click="recallTicket" class="btn-outline-amber">
-            RECALL CURRENT
-          </button>
         </div>
 
         <div class="pt-4 border-t border-slate-100 space-y-2">
@@ -294,9 +300,9 @@ const nextTicket = async () => {
   fetchQueues();
 };
 
-const recallTicket = async () => {
-  if (!current.value || current.value === "---") return;
-  await callTicket(current.value);
+const recallTicket = async (ticket) => {
+  if (!ticket) return;
+  await callTicket(ticket);
 };
 
 const callManual = async () => {

@@ -32,8 +32,9 @@ export default defineEventHandler(async () => {
   );
 
   broadcastQueueUpdate({
-    type: "next",
+    type: "serving",
     ticket: ticket.ticketnumber,
+    timestamp: Date.now(),
   });
 
   return {

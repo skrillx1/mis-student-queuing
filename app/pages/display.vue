@@ -257,7 +257,8 @@ const history = ref([]);
 const currentTime = ref("");
 const isNew = ref(false);
 const audioUnlocked = ref(false);
-const lastAnnounced = ref(null);
+const recalling = ref(false);
+const recalledTicket = ref(null);
 
 const updateClock = () => {
   const now = new Date();
@@ -269,60 +270,33 @@ const updateClock = () => {
   });
 };
 
-const announceTicket = (number) => {
+const announceTicket = (number, callback = null) => {
   if (!number || number === "---" || !window.speechSynthesis) return;
+
   window.speechSynthesis.cancel();
+
   const msg = new SpeechSynthesisUtterance(
     `Now serving ticket number ${number}, Please proceed to the M I S station.`,
   );
+
   msg.rate = 0.85;
   msg.pitch = 1.1;
-  const voices = window.speechSynthesis.getVoices();
-  const femaleVoice = voices.find(
-    (v) =>
-      v.lang.includes("en") &&
-      (v.name.includes("Female") || v.name.includes("Google")),
-  );
-  if (femaleVoice) msg.voice = femaleVoice;
+
+  msg.onend = () => {
+    if (callback) callback();
+  };
+
   window.speechSynthesis.speak(msg);
 };
 
 const fetchQueue = async () => {
-  try {
-    const res = await $fetch("/api/queue/display");
+  if (recalledTicket.value) return;
 
-    const newCurrent = res.current || "---";
+  const res = await $fetch("/api/queue/display");
 
-    if (newCurrent !== current.value) {
-      if (current.value !== "---") {
-        history.value.unshift(current.value);
-
-        if (history.value.length > 5) {
-          history.value.pop();
-        }
-      }
-
-      isNew.value = true;
-
-      setTimeout(() => {
-        isNew.value = false;
-      }, 8000);
-
-      if (
-        audioUnlocked.value &&
-        newCurrent !== "---" &&
-        lastAnnounced.value !== newCurrent
-      ) {
-        lastAnnounced.value = newCurrent;
-        announceTicket(newCurrent);
-      }
-    }
-
-    current.value = newCurrent;
-    next.value = res.next || "---";
-  } catch (err) {
-    console.error("Monitor Error:", err);
-  }
+  current.value = res.current || "---";
+  next.value = res.next || "---";
+  history.value = res.history || [];
 };
 
 const unlockAudio = () => {
@@ -345,14 +319,38 @@ onMounted(async () => {
 
     if (data.heartbeat) return;
 
-    await fetchQueue();
+    if (data.type === "recall") {
+      recalling.value = true;
+      recalledTicket.value = data.ticket;
 
-    if (
-      audioUnlocked.value &&
-      (data.type === "recall" || data.type === "serving")
-    ) {
-      announceTicket(data.ticket);
+      current.value = data.ticket;
+
+      if (audioUnlocked.value) {
+        announceTicket(data.ticket);
+      }
+
+      return;
     }
+
+    if (data.type === "serving") {
+      recalling.value = false;
+      recalledTicket.value = null;
+
+      await fetchQueue();
+
+      if (audioUnlocked.value) {
+        announceTicket(data.ticket);
+      }
+
+      isNew.value = true;
+      setTimeout(() => {
+        isNew.value = false;
+      }, 3000);
+
+      return;
+    }
+
+    await fetchQueue();
   };
 
   eventSource.onerror = () => {

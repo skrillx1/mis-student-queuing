@@ -247,13 +247,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 
 /* ================= STATE ================= */
 const queues = ref([]);
 const current = ref("---");
 const manual = ref("");
 const lastCalled = ref(null);
+let pollInterval = null; // Store interval ID for cleanup
 
 const filters = reactive({
   type: "active",
@@ -290,6 +291,7 @@ const callTicket = async (ticket) => {
   });
   current.value = res.current;
   lastCalled.value = ticket;
+  await fetchQueues(); // Sync immediately after action
 };
 
 const nextTicket = async () => {
@@ -297,7 +299,7 @@ const nextTicket = async () => {
     method: "POST",
   });
   current.value = res.current;
-  fetchQueues();
+  await fetchQueues(); // Sync immediately after action
 };
 
 const recallTicket = async (ticket) => {
@@ -316,7 +318,7 @@ const markDone = async (ticket) => {
     method: "POST",
     body: { ticket },
   });
-  fetchQueues();
+  await fetchQueues(); // Sync immediately after action
 };
 
 const fetchCurrentServing = async () => {
@@ -324,10 +326,30 @@ const fetchCurrentServing = async () => {
   current.value = res.current || "---";
 };
 
-/* ================= INIT ================= */
+// Unified fetch to pull everything in one lifecycle call
+const fetchAllData = async () => {
+  await Promise.all([fetchQueues(), fetchCurrentServing()]);
+};
+
+/* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
-  await fetchQueues();
-  await fetchCurrentServing();
+  // 1. Initial manual data load
+  await fetchAllData();
+
+  // 2. Begin automatic background updates every 5000ms (5 seconds)
+  pollInterval = setInterval(async () => {
+    // Only background poll if the user isn't actively searching/filtering
+    if (!filters.search.trim()) {
+      await fetchAllData();
+    }
+  }, 5000);
+});
+
+onBeforeUnmount(() => {
+  // 3. Clear interval when staff leaves the page to prevent memory leaks
+  if (pollInterval) {
+    clearInterval(pollInterval);
+  }
 });
 </script>
 

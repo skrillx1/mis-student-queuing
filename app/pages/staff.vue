@@ -90,16 +90,10 @@
                 </div>
               </div>
               <div class="flex gap-1.5">
-                <button
-                  @click="markDone(q.ticketnumber)"
-                  class="btn-action-done"
-                >
+                <button @click="markDone(q.id)" class="btn-action-done">
                   Done
                 </button>
-                <button
-                  @click="recallTicket(q.ticketnumber)"
-                  class="btn-action-call"
-                >
+                <button @click="recallTicket(q.id)" class="btn-action-call">
                   Recall
                 </button>
               </div>
@@ -138,16 +132,10 @@
               </div>
 
               <div class="flex gap-1.5">
-                <button
-                  @click="markDone(q.ticketnumber)"
-                  class="btn-action-done"
-                >
+                <button @click="markDone(q.id)" class="btn-action-done">
                   Done
                 </button>
-                <button
-                  @click="callTicket(q.ticketnumber)"
-                  class="btn-action-call"
-                >
+                <button @click="callTicket(q.id)" class="btn-action-call">
                   Call
                 </button>
               </div>
@@ -283,15 +271,18 @@ const fetchQueues = async () => {
   queues.value = res;
 };
 
-const callTicket = async (ticket) => {
-  if (!ticket) return;
+const callTicket = async (payload) => {
+  if (!payload) return;
+
+  // Decide if we are calling by unique database ID or by visible ticket number string
+  const requestBody = typeof payload === "object" ? payload : { id: payload };
+
   const res = await $fetch("/api/staff/call", {
     method: "POST",
-    body: { ticket },
+    body: requestBody,
   });
   current.value = res.current;
-  lastCalled.value = ticket;
-  await fetchQueues(); // Sync immediately after action
+  await fetchQueues();
 };
 
 const nextTicket = async () => {
@@ -302,23 +293,27 @@ const nextTicket = async () => {
   await fetchQueues(); // Sync immediately after action
 };
 
-const recallTicket = async (ticket) => {
-  if (!ticket) return;
-  await callTicket(ticket);
+const recallTicket = async (id) => {
+  if (!id) return;
+  await callTicket({ id });
 };
 
 const callManual = async () => {
-  if (!manual.value.trim()) return;
-  await callTicket(manual.value);
+  const code = manual.value.trim();
+  if (!code) return;
+
+  // Pass explicit object stating this is a raw ticket number lookup
+  await callTicket({ ticket: code });
   manual.value = "";
 };
 
-const markDone = async (ticket) => {
+const markDone = async (id) => {
+  if (!id) return;
   await $fetch("/api/staff/done", {
     method: "POST",
-    body: { ticket },
+    body: { id }, // Now passing unique ID
   });
-  await fetchQueues(); // Sync immediately after action
+  await fetchQueues();
 };
 
 const fetchCurrentServing = async () => {

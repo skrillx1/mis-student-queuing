@@ -29,10 +29,6 @@
         </div>
 
         <input type="date" v-model="filters.date" class="input" />
-
-        <div class="flex gap-1.5 ml-auto md:ml-0">
-          <button @click="fetchQueues" class="btn-gold shadow-sm">Apply</button>
-        </div>
       </div>
     </div>
 
@@ -235,14 +231,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+} from "vue";
 
 /* ================= STATE ================= */
 const queues = ref([]);
 const current = ref("---");
 const manual = ref("");
-const lastCalled = ref(null);
-let pollInterval = null; // Store interval ID for cleanup
+let pollInterval = null;
+let searchTimeout = null;
 
 const filters = reactive({
   type: "active",
@@ -263,6 +266,59 @@ const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
 
+/* ================= POLLING LOGIC ================= */
+const startPolling = () => {
+  if (pollInterval) return;
+  pollInterval = setInterval(async () => {
+    await fetchAllData();
+  }, 5000);
+};
+
+const stopPolling = () => {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+};
+
+const managePollingState = () => {
+  // Completely pause background fetching if the user is typing or searching
+  if (filters.search.trim() !== "") {
+    stopPolling();
+  } else {
+    startPolling();
+  }
+};
+
+/* ================= WATCHERS (REACTIVITY) ================= */
+
+// 1. Instantly fetch when Type or Date changes
+watch(
+  () => [filters.type, filters.date],
+  () => {
+    fetchQueues();
+  },
+);
+
+// 2. Debounce fetch when Search changes to protect database performance
+watch(
+  () => filters.search,
+  () => {
+    // Check if we need to pause or resume the background poll
+    managePollingState();
+
+    // Clear previous pending keystroke
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Wait 300ms after typing stops before calling the API
+    searchTimeout = setTimeout(() => {
+      fetchQueues();
+    }, 300);
+  },
+);
+
 /* ================= API ================= */
 const fetchQueues = async () => {
   const res = await $fetch("/api/staff/queues", {
@@ -274,7 +330,6 @@ const fetchQueues = async () => {
 const callTicket = async (payload) => {
   if (!payload) return;
 
-  // Decide if we are calling by unique database ID or by visible ticket number string
   const requestBody = typeof payload === "object" ? payload : { id: payload };
 
   const res = await $fetch("/api/staff/call", {
@@ -290,7 +345,7 @@ const nextTicket = async () => {
     method: "POST",
   });
   current.value = res.current;
-  await fetchQueues(); // Sync immediately after action
+  await fetchQueues();
 };
 
 const recallTicket = async (id) => {
@@ -302,7 +357,6 @@ const callManual = async () => {
   const code = manual.value.trim();
   if (!code) return;
 
-  // Pass explicit object stating this is a raw ticket number lookup
   await callTicket({ ticket: code });
   manual.value = "";
 };
@@ -311,7 +365,7 @@ const markDone = async (id) => {
   if (!id) return;
   await $fetch("/api/staff/done", {
     method: "POST",
-    body: { id }, // Now passing unique ID
+    body: { id },
   });
   await fetchQueues();
 };
@@ -321,29 +375,20 @@ const fetchCurrentServing = async () => {
   current.value = res.current || "---";
 };
 
-// Unified fetch to pull everything in one lifecycle call
 const fetchAllData = async () => {
   await Promise.all([fetchQueues(), fetchCurrentServing()]);
 };
 
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
-  // 1. Initial manual data load
   await fetchAllData();
-
-  // 2. Begin automatic background updates every 5000ms (5 seconds)
-  pollInterval = setInterval(async () => {
-    // Only background poll if the user isn't actively searching/filtering
-    if (!filters.search.trim()) {
-      await fetchAllData();
-    }
-  }, 5000);
+  managePollingState(); // Will start polling initially since search is empty
 });
 
 onBeforeUnmount(() => {
-  // 3. Clear interval when staff leaves the page to prevent memory leaks
-  if (pollInterval) {
-    clearInterval(pollInterval);
+  stopPolling();
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
   }
 });
 </script>

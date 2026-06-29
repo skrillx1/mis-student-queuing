@@ -167,10 +167,17 @@
                 <p class="text-xs text-slate-400">{{ q.servicetype }}</p>
               </div>
             </div>
-            <span
-              class="text-xs font-medium text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded"
-              >Finished</span
-            >
+
+            <div class="flex items-center gap-2">
+              <span
+                class="text-xs font-medium text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded"
+              >
+                Finished
+              </span>
+              <button @click="recallTicket(q.id)" class="btn-action-call">
+                Recall
+              </button>
+            </div>
           </div>
         </template>
       </div>

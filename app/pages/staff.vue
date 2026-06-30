@@ -266,7 +266,9 @@ const servingQueues = computed(() =>
 );
 
 const waitingQueues = computed(() =>
-  queues.value.filter((q) => q.status === "waiting"),
+  queues.value
+    .filter((q) => q.status === "waiting")
+    .sort((a, b) => Number(a.ticketnumber) - Number(b.ticketnumber)),
 );
 
 const doneQueues = computed(() =>

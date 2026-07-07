@@ -164,21 +164,23 @@
           <div class="space-y-4">
             <TransitionGroup name="list">
               <div
-                v-for="(num, index) in history"
+                v-for="(num, index) in history.slice(0, 3)"
                 :key="num"
                 class="group flex justify-between items-center p-6 bg-white/[0.02] border border-white/5 rounded-2xl transition-all"
                 :style="{ opacity: 1 - index * 0.22 }"
               >
                 <span
                   class="font-bold text-3xl text-slate-300 group-hover:text-yellow-500 transition-colors"
-                  >{{ num }}</span
                 >
+                  {{ num }}
+                </span>
                 <div class="flex items-center gap-2">
                   <div class="h-1.5 w-1.5 rounded-full bg-slate-700"></div>
                   <span
                     class="text-[10px] font-bold uppercase text-slate-600 tracking-widest"
-                    >Completed</span
                   >
+                    Completed
+                  </span>
                 </div>
               </div>
             </TransitionGroup>

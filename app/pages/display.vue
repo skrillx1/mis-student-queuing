@@ -252,6 +252,11 @@
 <script setup>
 import { onMounted, onBeforeUnmount } from "vue";
 
+// Disable default layout (AppHeader and AppSidebar) for this page
+definePageMeta({
+  layout: false,
+});
+
 let eventSource = null;
 const current = ref("---");
 const next = ref("---");

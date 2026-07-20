@@ -89,11 +89,12 @@
     <template v-else-if="stats">
       <!-- Summary & Filter Row -->
       <section
-        class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden"
+        class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden"
       >
         <div class="absolute top-0 left-0 bottom-0 w-2 bg-[#003300]"></div>
 
-        <div class="space-y-1">
+        <!-- Left: Live Summary Title -->
+        <div class="space-y-1 shrink-0">
           <div
             class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60"
           >
@@ -103,26 +104,27 @@
             Live Queue Summary
           </div>
           <h2 class="text-xl font-bold text-slate-900">
-            Total Completed Services
+            Queue Metrics Overview
           </h2>
           <p class="text-xs text-slate-500">
-            Cumulative completed tickets across all active categories
+            Real-time active, pending, and completed service metrics
           </p>
         </div>
 
+        <!-- Right: Metrics & Filter Controls -->
         <div
-          class="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+          class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap lg:flex-nowrap"
         >
           <!-- Search / Filter Input -->
-          <div class="relative w-full sm:w-64">
+          <div class="relative w-full sm:w-52">
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Filter category..."
-              class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300] transition-all"
+              class="w-full pl-9 pr-3 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300] transition-all"
             />
             <svg
-              class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+              class="w-4 h-4 text-slate-400 absolute left-3 top-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -136,18 +138,49 @@
             </svg>
           </div>
 
-          <!-- Total Metric Badge -->
-          <div
-            class="flex items-baseline gap-2 bg-slate-50 px-5 py-3 rounded-xl border border-slate-200/60 shrink-0"
-          >
-            <span class="text-4xl font-black text-[#003300] tracking-tight">
-              {{ totalDone }}
-            </span>
-            <span
-              class="text-xs font-bold uppercase tracking-wider text-slate-500"
+          <!-- Metric Badges Group -->
+          <div class="grid grid-cols-3 gap-2.5 w-full sm:w-auto shrink-0">
+            <!-- Serving Badge -->
+            <div
+              class="flex flex-col items-center sm:items-start bg-blue-50/60 px-4 py-2.5 rounded-xl border border-blue-200/60 shrink-0 min-w-[90px]"
             >
-              Total Done
-            </span>
+              <span
+                class="text-xs font-bold uppercase tracking-wider text-blue-700"
+              >
+                Serving
+              </span>
+              <span class="text-2xl font-black text-blue-900 tracking-tight">
+                {{ totalServing }}
+              </span>
+            </div>
+
+            <!-- Waiting Badge -->
+            <div
+              class="flex flex-col items-center sm:items-start bg-amber-50/60 px-4 py-2.5 rounded-xl border border-amber-200/60 shrink-0 min-w-[90px]"
+            >
+              <span
+                class="text-xs font-bold uppercase tracking-wider text-amber-700"
+              >
+                Waiting
+              </span>
+              <span class="text-2xl font-black text-amber-900 tracking-tight">
+                {{ totalWaiting }}
+              </span>
+            </div>
+
+            <!-- Total Done Badge -->
+            <div
+              class="flex flex-col items-center sm:items-start bg-emerald-50/60 px-4 py-2.5 rounded-xl border border-emerald-200/60 shrink-0 min-w-[90px]"
+            >
+              <span
+                class="text-xs font-bold uppercase tracking-wider text-[#003300]"
+              >
+                Done
+              </span>
+              <span class="text-2xl font-black text-[#003300] tracking-tight">
+                {{ totalDone }}
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -275,6 +308,8 @@ import { ref, computed, h } from "vue";
 interface CategoryStat {
   servicetype: string;
   done: number;
+  serving?: number;
+  waiting?: number;
 }
 
 interface StatsResponse {
@@ -293,6 +328,22 @@ const {
 const handleRefresh = async () => {
   await refresh();
 };
+
+const totalServing = computed(() => {
+  if (!stats.value?.categories) return 0;
+  return stats.value.categories.reduce(
+    (acc, cat) => acc + (cat.serving || 0),
+    0,
+  );
+});
+
+const totalWaiting = computed(() => {
+  if (!stats.value?.categories) return 0;
+  return stats.value.categories.reduce(
+    (acc, cat) => acc + (cat.waiting || 0),
+    0,
+  );
+});
 
 const totalDone = computed(() => {
   if (!stats.value?.categories) return 0;

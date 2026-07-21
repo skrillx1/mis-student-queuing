@@ -2,7 +2,7 @@ import { pool } from "../../utils/db";
 import { broadcastQueueUpdate } from "../../utils/queue-events";
 
 export default defineEventHandler(async (event) => {
-  const { id, ticket } = await readBody(event);
+  const { id, ticket, id_picture_filename } = await readBody(event);
   let res;
 
   if (id) {
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
       `UPDATE queue_tickets
        SET status = 'done'
        WHERE id = $1
-       RETURNING ticketnumber`,
+       RETURNING ticketnumber, idnumber`,
       [id],
     );
   } else if (ticket) {
@@ -21,12 +21,24 @@ export default defineEventHandler(async (event) => {
        WHERE ticketnumber = $1 AND status = 'serving'
        ORDER BY id ASC
        LIMIT 1
-       RETURNING ticketnumber`,
+       RETURNING ticketnumber, idnumber`,
       [ticket],
     );
   }
 
-  const finishedTicket = res?.rows[0]?.ticketnumber || ticket;
+  const finishedRecord = res?.rows[0];
+  const finishedTicket = finishedRecord?.ticketnumber || ticket;
+  const idNumber = finishedRecord?.idnumber;
+
+  // Save filename to id_applications matching studid = idnumber
+  if (id_picture_filename && idNumber) {
+    await pool.query(
+      `UPDATE id_applications
+       SET id_picture_filename = $1
+       WHERE studid = $2`,
+      [id_picture_filename, idNumber],
+    );
+  }
 
   broadcastQueueUpdate({
     type: "done",

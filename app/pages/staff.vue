@@ -60,6 +60,7 @@
             </p>
           </div>
 
+          <!-- NOW SERVING SECTION -->
           <div v-if="servingQueues.length" class="mb-6">
             <p class="section-title text-emerald-700 font-semibold">
               Now Serving
@@ -68,9 +69,9 @@
             <div
               v-for="q in servingQueues"
               :key="q.id"
-              class="queue-item border-l-4 border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 transition-colors"
+              class="queue-item flex-col sm:flex-row items-stretch sm:items-center gap-3 border-l-4 border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50 transition-colors"
             >
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-4 flex-1">
                 <div
                   class="text-2xl font-black tracking-wider text-emerald-800 bg-emerald-100/60 px-3 py-1.5 rounded-lg min-w-[85px] text-center"
                 >
@@ -85,7 +86,21 @@
                   </p>
                 </div>
               </div>
-              <div class="flex gap-1.5">
+
+              <!-- Filename Input for ID Processing -->
+              <div
+                v-if="isIdProcessing(q.servicetype)"
+                class="flex flex-col gap-1 w-full sm:w-auto"
+              >
+                <input
+                  v-model="idPictureMap[q.id]"
+                  type="text"
+                  placeholder="ID Picture Filename..."
+                  class="input text-xs py-1.5 px-2.5 w-full sm:w-48 border-emerald-300 focus:border-emerald-600"
+                />
+              </div>
+
+              <div class="flex gap-1.5 justify-end">
                 <button @click="markDone(q.id)" class="btn-action-done">
                   Done
                 </button>
@@ -101,6 +116,7 @@
             class="divider"
           ></div>
 
+          <!-- WAITING LIST SECTION -->
           <div v-if="waitingQueues.length">
             <p class="section-title text-amber-700 font-semibold">
               Waiting List
@@ -109,9 +125,9 @@
             <div
               v-for="q in waitingQueues"
               :key="q.id"
-              class="queue-item border-l-4 border-amber-500 bg-white shadow-sm hover:border-amber-600 transition-all"
+              class="queue-item flex-col sm:flex-row items-stretch sm:items-center gap-3 border-l-4 border-amber-500 bg-white shadow-sm hover:border-amber-600 transition-all"
             >
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-4 flex-1">
                 <div
                   class="text-xl font-bold tracking-wider text-amber-800 bg-amber-50 px-3 py-1.5 rounded-lg min-w-[85px] text-center border border-amber-100"
                 >
@@ -127,7 +143,20 @@
                 </div>
               </div>
 
-              <div class="flex gap-1.5">
+              <!-- Filename Input for ID Processing -->
+              <div
+                v-if="isIdProcessing(q.servicetype)"
+                class="flex flex-col gap-1 w-full sm:w-auto"
+              >
+                <input
+                  v-model="idPictureMap[q.id]"
+                  type="text"
+                  placeholder="ID Picture Filename..."
+                  class="input text-xs py-1.5 px-2.5 w-full sm:w-48 border-amber-300 focus:border-amber-500"
+                />
+              </div>
+
+              <div class="flex gap-1.5 justify-end">
                 <button @click="markDone(q.id)" class="btn-action-done">
                   Done
                 </button>
@@ -139,6 +168,7 @@
           </div>
         </template>
 
+        <!-- COMPLETED SESSIONS SECTION -->
         <template v-else>
           <p class="section-title text-slate-500">Completed Sessions</p>
 
@@ -164,7 +194,15 @@
                 <p class="font-medium text-slate-700 text-sm">
                   {{ q.fullname }}
                 </p>
-                <p class="text-xs text-slate-400">{{ q.servicetype }}</p>
+                <p class="text-xs text-slate-400">
+                  {{ q.servicetype }}
+                  <span
+                    v-if="q.id_picture_filename"
+                    class="font-mono text-slate-500 ml-1"
+                  >
+                    ({{ q.id_picture_filename }})
+                  </span>
+                </p>
               </div>
             </div>
 
@@ -182,6 +220,7 @@
         </template>
       </div>
 
+      <!-- SIDEBAR CONTROLS -->
       <div class="panel bg-white shadow-sm space-y-5 border border-slate-200">
         <h2
           class="font-bold text-slate-800 tracking-tight pb-2 border-b border-slate-100"
@@ -251,6 +290,8 @@ import {
 const queues = ref([]);
 const current = ref("---");
 const manual = ref("");
+const idPictureMap = reactive({}); // Stores filename by ticket ID: { [ticketId]: 'filename.jpg' }
+
 let pollInterval = null;
 let searchTimeout = null;
 
@@ -275,6 +316,11 @@ const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
 
+/* ================= HELPER FUNCTIONS ================= */
+const isIdProcessing = (serviceType) => {
+  return serviceType?.toLowerCase().includes("id processing");
+};
+
 /* ================= POLLING LOGIC ================= */
 const startPolling = () => {
   if (pollInterval) return;
@@ -291,7 +337,6 @@ const stopPolling = () => {
 };
 
 const managePollingState = () => {
-  // Completely pause background fetching if the user is typing or searching
   if (filters.search.trim() !== "") {
     stopPolling();
   } else {
@@ -299,9 +344,7 @@ const managePollingState = () => {
   }
 };
 
-/* ================= WATCHERS (REACTIVITY) ================= */
-
-// 1. Instantly fetch when Type or Date changes
+/* ================= WATCHERS ================= */
 watch(
   () => [filters.type, filters.date],
   () => {
@@ -309,19 +352,15 @@ watch(
   },
 );
 
-// 2. Debounce fetch when Search changes to protect database performance
 watch(
   () => filters.search,
   () => {
-    // Check if we need to pause or resume the background poll
     managePollingState();
 
-    // Clear previous pending keystroke
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    // Wait 300ms after typing stops before calling the API
     searchTimeout = setTimeout(() => {
       fetchQueues();
     }, 300);
@@ -350,8 +389,28 @@ const callTicket = async (payload) => {
 };
 
 const nextTicket = async () => {
+  // If the currently serving ticket is ID Processing, ensure filename was provided before serving next
+  const activeServing = servingQueues.value[0];
+  if (activeServing && isIdProcessing(activeServing.servicetype)) {
+    const filename = idPictureMap[activeServing.id]?.trim();
+    if (!filename) {
+      alert(
+        "Please enter the ID Picture Filename for the currently serving ticket before calling the next one.",
+      );
+      return;
+    }
+  }
+
+  const payload = activeServing
+    ? {
+        id: activeServing.id,
+        id_picture_filename: idPictureMap[activeServing.id],
+      }
+    : {};
+
   const res = await $fetch("/api/staff/next", {
     method: "POST",
+    body: payload,
   });
   current.value = res.current;
   await fetchQueues();
@@ -372,10 +431,28 @@ const callManual = async () => {
 
 const markDone = async (id) => {
   if (!id) return;
+
+  const ticket = queues.value.find((q) => q.id === id);
+  const filename = idPictureMap[id]?.trim();
+
+  // Validate requirement if service is ID Processing
+  if (ticket && isIdProcessing(ticket.servicetype) && !filename) {
+    alert(
+      "Please enter the ID Picture Filename before marking this ticket as done.",
+    );
+    return;
+  }
+
   await $fetch("/api/staff/done", {
     method: "POST",
-    body: { id },
+    body: {
+      id,
+      id_picture_filename: filename || null,
+    },
   });
+
+  // Clean up input state
+  delete idPictureMap[id];
   await fetchQueues();
 };
 
@@ -391,7 +468,7 @@ const fetchAllData = async () => {
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
   await fetchAllData();
-  managePollingState(); // Will start polling initially since search is empty
+  managePollingState();
 });
 
 onBeforeUnmount(() => {

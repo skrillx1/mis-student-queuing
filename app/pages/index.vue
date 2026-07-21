@@ -395,6 +395,11 @@ const form = reactive({
   contact_number: "",
 });
 
+// Disable default layout (AppHeader and AppSidebar) for this page
+definePageMeta({
+  layout: false,
+});
+
 /* ================= ENTRY POINT FOR ID PROCESSING ================= */
 const startIdProcessing = () => {
   clearForm();

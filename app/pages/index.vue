@@ -235,12 +235,12 @@
             />
             <input
               v-model="form.studid"
-              placeholder="Student ID"
+              placeholder="Student ID Number"
               class="form-input"
             />
             <input
               v-model="form.course"
-              placeholder="Course"
+              placeholder="Course Code"
               class="form-input"
             />
             <div class="md:col-span-2 border-t border-white/5 pt-2 mt-2">
@@ -248,17 +248,17 @@
             </div>
             <input
               v-model="form.contact_name"
-              placeholder="Name"
+              placeholder="Guardian Name"
               class="form-input"
             />
             <input
               v-model="form.contact_number"
-              placeholder="Number"
+              placeholder="Guardian Contact Number"
               class="form-input"
             />
             <input
               v-model="form.contact_address"
-              placeholder="Full Address"
+              placeholder="Complete Address"
               class="form-input md:col-span-2"
             />
           </div>

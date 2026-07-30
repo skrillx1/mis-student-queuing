@@ -38,6 +38,7 @@
         class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all cursor-pointer"
       >
         <option value="active">All (Serving + Waiting)</option>
+        <option value="onhold">On Hold Only</option>
         <option value="done">Completed Only</option>
       </select>
 
@@ -89,10 +90,16 @@
         >
           <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
           Total Tickets:
-          {{ servingQueues.length + waitingQueues.length + doneQueues.length }}
+          {{
+            servingQueues.length +
+            waitingQueues.length +
+            onHoldQueues.length +
+            doneQueues.length
+          }}
         </span>
       </div>
 
+      <!-- ACTIVE TICKETS FILTER -->
       <template v-if="filters.type === 'active'">
         <!-- EMPTY STATE -->
         <div
@@ -202,6 +209,25 @@
                 Done
               </button>
               <button
+                @click="holdTicket(q.id)"
+                class="h-9 px-3.5 bg-orange-50 hover:bg-orange-100 active:scale-[0.98] text-orange-800 border border-orange-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Hold
+              </button>
+              <button
                 @click="recallTicket(q.id)"
                 class="h-9 px-3.5 bg-amber-50 hover:bg-amber-100 active:scale-[0.98] text-amber-800 border border-amber-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
@@ -272,6 +298,92 @@
                 placeholder="ID Picture Filename..."
                 class="h-9 text-xs px-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
               />
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 justify-end">
+              <button
+                @click="holdTicket(q.id)"
+                class="h-9 px-3.5 bg-orange-50 hover:bg-orange-100 active:scale-[0.98] text-orange-800 border border-orange-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                Hold
+              </button>
+              <button
+                @click="markDone(q.id)"
+                class="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all cursor-pointer"
+              >
+                Done
+              </button>
+              <button
+                @click="callTicket(q.id)"
+                :disabled="hasActiveServing"
+                :class="[
+                  'h-9 px-4 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 rounded-lg',
+                  hasActiveServing
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                    : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
+                ]"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                  />
+                </svg>
+                Call
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ON HOLD TICKETS SECTION -->
+      <template v-else-if="filters.type === 'onhold'">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+            <p
+              class="text-xs uppercase font-bold tracking-wider text-orange-800"
+            >
+              On Hold Tickets ({{ onHoldQueues.length }})
+            </p>
+          </div>
+
+          <div
+            v-if="!onHoldQueues.length"
+            class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
+          >
+            <p class="text-sm font-medium text-slate-500">
+              No on-hold tickets found.
+            </p>
+          </div>
+
+          <div
+            v-for="q in onHoldQueues"
+            :key="q.id"
+            class="flex items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-orange-500 border border-slate-200/80 bg-white hover:border-orange-400 hover:shadow-xs transition-all"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="flex flex-col items-center justify-center bg-orange-50 text-orange-900 border border-orange-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
+              >
+                {{ q.ticketnumber }}
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                  {{ q.fullname }}
+                </h3>
+                <p class="text-xs font-medium text-slate-500 mt-0.5">
+                  {{ q.servicetype }}
+                </p>
+              </div>
             </div>
 
             <!-- Actions -->
@@ -506,6 +618,12 @@ const waitingQueues = computed(() =>
     .sort((a, b) => Number(a.ticketnumber) - Number(b.ticketnumber)),
 );
 
+const onHoldQueues = computed(() =>
+  queues.value
+    .filter((q) => q.status === "onhold")
+    .sort((a, b) => Number(a.ticketnumber) - Number(b.ticketnumber)),
+);
+
 const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
@@ -578,7 +696,7 @@ const callTicket = async (payload) => {
   const targetId = typeof payload === "object" ? payload.id : payload;
   const isCurrentlyServing = servingQueues.value.some((q) => q.id === targetId);
 
-  // GUARD: Prevent serving a new ticket if another ticket is already active
+  // GUARD: Prevent serving a new or on-hold ticket if another ticket is already active
   if (hasActiveServing.value && !isCurrentlyServing) {
     alert(
       "You are currently serving a ticket. Please mark the active ticket as 'Done' before serving a new one.",
@@ -594,6 +712,17 @@ const callTicket = async (payload) => {
   });
   current.value = res.current;
   await fetchQueues();
+};
+
+const holdTicket = async (id) => {
+  if (!id) return;
+
+  await $fetch("/api/staff/hold", {
+    method: "POST",
+    body: { id },
+  });
+
+  await fetchAllData();
 };
 
 const nextTicket = async () => {

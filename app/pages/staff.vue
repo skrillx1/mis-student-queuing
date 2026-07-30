@@ -5,7 +5,6 @@
   >
     <div class="flex items-center gap-3">
       <div class="p-2.5 bg-emerald-800 text-amber-400 rounded-xl shadow-xs">
-        <!-- Queue Icon -->
         <svg
           class="w-6 h-6"
           fill="none"
@@ -285,7 +284,13 @@
               </button>
               <button
                 @click="callTicket(q.id)"
-                class="h-9 px-4 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 rounded-lg font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                :disabled="hasActiveServing"
+                :class="[
+                  'h-9 px-4 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 rounded-lg',
+                  hasActiveServing
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                    : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
+                ]"
               >
                 <svg
                   class="w-3.5 h-3.5"
@@ -387,7 +392,7 @@
           </span>
         </h2>
 
-        <!-- CURRENT SERVING DISPLAY DISPLAY -->
+        <!-- CURRENT SERVING DISPLAY -->
         <div
           class="p-6 bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-2xl shadow-md text-center relative overflow-hidden border border-emerald-800/50"
         >
@@ -448,7 +453,13 @@
             />
             <button
               @click="callManual"
-              class="h-10 px-5 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-extrabold text-xs tracking-wider rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap"
+              :disabled="hasActiveServing || !manual.trim()"
+              :class="[
+                'h-10 px-5 font-extrabold text-xs tracking-wider rounded-xl transition-all shadow-xs whitespace-nowrap',
+                hasActiveServing || !manual.trim()
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
+              ]"
             >
               CALL
             </button>
@@ -498,6 +509,9 @@ const waitingQueues = computed(() =>
 const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
+
+// Flag to check if any ticket is actively serving
+const hasActiveServing = computed(() => servingQueues.value.length > 0);
 
 /* ================= HELPER FUNCTIONS ================= */
 const isIdProcessing = (serviceType) => {
@@ -550,7 +564,7 @@ watch(
   },
 );
 
-/* ================= API ================= */
+/* ================= API ACTIONS ================= */
 const fetchQueues = async () => {
   const res = await $fetch("/api/staff/queues", {
     query: { ...filters },
@@ -560,6 +574,17 @@ const fetchQueues = async () => {
 
 const callTicket = async (payload) => {
   if (!payload) return;
+
+  const targetId = typeof payload === "object" ? payload.id : payload;
+  const isCurrentlyServing = servingQueues.value.some((q) => q.id === targetId);
+
+  // GUARD: Prevent serving a new ticket if another ticket is already active
+  if (hasActiveServing.value && !isCurrentlyServing) {
+    alert(
+      "You are currently serving a ticket. Please mark the active ticket as 'Done' before serving a new one.",
+    );
+    return;
+  }
 
   const requestBody = typeof payload === "object" ? payload : { id: payload };
 
@@ -573,6 +598,7 @@ const callTicket = async (payload) => {
 
 const nextTicket = async () => {
   const activeServing = servingQueues.value[0];
+
   if (activeServing && isIdProcessing(activeServing.servicetype)) {
     const filename = idPictureMap[activeServing.id]?.trim();
     if (!filename) {
@@ -600,12 +626,27 @@ const nextTicket = async () => {
 
 const recallTicket = async (id) => {
   if (!id) return;
-  await callTicket({ id });
+  // Recalls bypass the active-serving block for the same ticket
+  const requestBody = { id };
+  const res = await $fetch("/api/staff/call", {
+    method: "POST",
+    body: requestBody,
+  });
+  current.value = res.current;
+  await fetchQueues();
 };
 
 const callManual = async () => {
   const code = manual.value.trim();
   if (!code) return;
+
+  // GUARD: Block manual calls if a ticket is being served
+  if (hasActiveServing.value) {
+    alert(
+      "Please complete (Mark Done) the currently serving ticket before dispatching a manual code.",
+    );
+    return;
+  }
 
   await callTicket({ ticket: code });
   manual.value = "";

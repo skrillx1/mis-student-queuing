@@ -58,7 +58,7 @@
           <div class="space-y-2">
             <button
               @click="manualEntry"
-              class="w-full bg-white/5 hover:bg-white/10 py-3 rounded-xl text-sm font-medium"
+              class="w-full bg-white/5 hover:bg-white/10 py-3 rounded-xl text-sm font-medium transition"
             >
               Enter ID Number Manually
             </button>
@@ -68,6 +68,14 @@
               class="w-full bg-yellow-500/20 hover:bg-yellow-500 text-yellow-400 hover:text-[#0a210f] py-3 rounded-xl font-bold transition"
             >
               No ID yet? Process New ID
+            </button>
+
+            <!-- CLAIM STUDENT ID BUTTON -->
+            <button
+              @click="claimStudentId"
+              class="w-full bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-[#0a210f] py-3 rounded-xl font-bold transition"
+            >
+              Claim Student ID
             </button>
           </div>
         </div>
@@ -406,6 +414,11 @@ const startIdProcessing = () => {
   step.value = "form";
 };
 
+/* ================= CLAIM STUDENT ID ================= */
+const claimStudentId = () => {
+  createQueue("Claim Student ID");
+};
+
 /* ================= CONSTANTS ================= */
 const services = ["Re-ID", "Account Problem", "Clearance Signing", "Inquiry"];
 
@@ -430,12 +443,12 @@ const resetState = () => {
 };
 
 /* ================= RFID FLOW ================= */
-const lastScannedRFID = ref(""); // ADD THIS
+const lastScannedRFID = ref("");
 
 const scanRFID = async () => {
   if (!rfid.value) return;
 
-  lastScannedRFID.value = rfid.value; // SAVE IT FIRST
+  lastScannedRFID.value = rfid.value;
 
   const res = await $fetch("/api/scan", {
     method: "POST",
@@ -445,7 +458,7 @@ const scanRFID = async () => {
   student.value = res.status === "found" ? res.student : null;
   step.value = res.status === "found" ? "found" : "input";
 
-  rfid.value = ""; // safe to clear
+  rfid.value = "";
 };
 
 const manualEntry = () => (step.value = "input");
@@ -465,14 +478,11 @@ const checkStudent = async () => {
   }
 
   student.value = res.student;
-
-  // 👉 go to confirmation instead of binding
   step.value = "confirm";
 };
 
 /* ================= CONFIRMATION & BINDING ================= */
 const confirmBinding = async () => {
-  // only bind if RFID came from scan
   if (lastScannedRFID.value) {
     const bindRes = await $fetch("/api/bind", {
       method: "POST",
@@ -490,10 +500,7 @@ const confirmBinding = async () => {
     student.value = bindRes.student;
   }
 
-  // move forward
   step.value = "found";
-
-  // cleanup
   studid.value = "";
   lastScannedRFID.value = "";
 };
@@ -503,7 +510,6 @@ const selectService = (service) => {
   selectedService.value = service;
 
   if (service === "ID Processing") {
-    // prefill
     form.firstname = student.value?.firstname || "";
     form.lastname = student.value?.lastname || "";
     form.studid = student.value?.studid || "";
@@ -615,7 +621,6 @@ onUnmounted(() => {
   }
   to {
     transform: scale(1);
-    opacity: 1;
   }
 }
 </style>

@@ -60,11 +60,11 @@
       </div>
     </header>
 
-    <!-- MAIN SECTION: 70% / 30% SIMPLE COLUMN LAYOUT -->
+    <!-- MAIN SECTION: 70% / 30% LAYOUT -->
     <main class="flex-grow flex flex-col lg:flex-row z-10 overflow-hidden">
-      <!-- LEFT COLUMN (70% WIDTH): NOW SERVING DISPLAY -->
+      <!-- LEFT COLUMN (70% WIDTH): 5 STATIONS GRID DISPLAY -->
       <section
-        class="w-full lg:w-[70%] flex flex-col items-center justify-between p-8 border-b lg:border-b-0 lg:border-r border-emerald-900/60 bg-[#020b05] relative overflow-hidden"
+        class="w-full lg:w-[70%] flex flex-col justify-between p-6 border-b lg:border-b-0 lg:border-r border-emerald-900/60 bg-[#020b05] relative overflow-hidden"
         aria-live="polite"
         aria-atomic="true"
       >
@@ -80,7 +80,7 @@
         </div>
 
         <!-- TOP: STATUS BADGE -->
-        <div class="z-10 pt-2">
+        <div class="z-10 text-center pt-2">
           <div
             class="inline-flex items-center gap-2 px-5 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs font-black uppercase tracking-[0.3em]"
           >
@@ -92,48 +92,80 @@
                 class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"
               ></span>
             </span>
-            Now Serving
+            Active Serving Stations
           </div>
         </div>
 
-        <!-- CENTER: MAXIMIZED & HIGH-NOTICEABLE TICKET NUMBER -->
+        <!-- CENTER: 5 STATIONS GRID -->
         <div
-          class="z-10 flex flex-col items-center justify-center my-auto w-full max-w-full overflow-hidden px-6"
+          class="z-10 grid grid-cols-2 md:grid-cols-3 gap-4 my-auto w-full p-2"
         >
-          <Transition name="scale" mode="out-in">
-            <h1
-              :key="current"
-              class="font-black leading-none text-amber-400 tabular-nums tracking-tighter text-center max-w-full truncate select-none drop-shadow-none"
-              style="font-size: min(18vw, 30vh)"
-            >
-              {{ current }}
-            </h1>
-          </Transition>
-
-          <!-- New Ticket Pulse Banner -->
-          <Transition name="fade">
+          <div
+            v-for="st in [1, 2, 3, 4, 5]"
+            :key="st"
+            class="relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300"
+            :class="[
+              activeStation === st
+                ? 'bg-amber-500/10 border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.15)] scale-[1.02]'
+                : 'bg-[#041409]/80 border-emerald-900/80',
+            ]"
+          >
+            <!-- Station Header -->
             <div
-              v-if="isNew"
-              class="bg-amber-400 text-black text-xs md:text-sm font-black px-6 py-1.5 rounded-full uppercase tracking-widest mt-4 animate-bounce shrink-0"
+              class="flex items-center justify-between border-b border-emerald-900/50 pb-2"
             >
-              Next Ticket Called
+              <span
+                class="text-xs font-black uppercase tracking-widest text-emerald-400"
+              >
+                Station {{ st }}
+              </span>
+              <span
+                v-if="activeStation === st && isNew"
+                class="bg-amber-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse"
+              >
+                Called
+              </span>
             </div>
-          </Transition>
+
+            <!-- Station Ticket Display -->
+            <div class="py-6 text-center">
+              <Transition name="scale" mode="out-in">
+                <span
+                  :key="stations[st]"
+                  class="text-4xl md:text-5xl lg:text-6xl font-black tabular-nums tracking-tighter"
+                  :class="
+                    stations[st] !== '---' ? 'text-amber-400' : 'text-slate-600'
+                  "
+                >
+                  {{ stations[st] || "---" }}
+                </span>
+              </Transition>
+            </div>
+
+            <!-- Footer Label -->
+            <div class="text-center pt-1 border-t border-emerald-900/40">
+              <span
+                class="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+              >
+                {{ stations[st] !== "---" ? "Now Serving" : "Available" }}
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- BOTTOM: INSTRUCTIONS PANEL -->
-        <div class="z-10 w-full max-w-xl pb-2">
+        <div class="z-10 w-full max-w-xl mx-auto pb-2">
           <div
-            class="py-4 px-8 bg-[#041409] border border-emerald-900/80 rounded-2xl text-center"
+            class="py-3 px-6 bg-[#041409] border border-emerald-900/80 rounded-2xl text-center"
           >
             <p
-              class="text-xl md:text-2xl text-slate-200 font-medium tracking-wide"
+              class="text-base md:text-lg text-slate-200 font-medium tracking-wide"
             >
-              Please proceed to
+              Please proceed to your assigned
               <span
-                class="text-amber-400 font-black underline decoration-amber-400/40 underline-offset-8"
+                class="text-amber-400 font-black underline decoration-amber-400/40 underline-offset-4"
               >
-                MIS Main Counter
+                Station Number
               </span>
             </p>
           </div>
@@ -144,7 +176,7 @@
       <aside
         class="w-full lg:w-[30%] bg-[#041409] p-6 lg:p-8 flex flex-col justify-center border-l border-emerald-900/60 z-20 overflow-y-auto"
       >
-        <!-- STEP 1: DIRECT SERVICE SELECTION & TICKET GENERATION -->
+        <!-- STEP 1: SERVICE SELECTION -->
         <div
           v-if="step === 'scan'"
           class="space-y-6 text-center animate-in fade-in"
@@ -165,7 +197,6 @@
             </p>
           </div>
 
-          <!-- Kiosk Action Box -->
           <div
             class="p-5 bg-[#020b05] rounded-2xl border border-emerald-900/80 flex flex-col items-center space-y-4"
           >
@@ -173,7 +204,6 @@
               Tap any option above to get your queue ticket
             </p>
 
-            <!-- Enhanced Service Selection Direct Action Buttons -->
             <div class="w-full space-y-3">
               <button
                 v-for="service in availableServices"
@@ -183,12 +213,10 @@
                 type="button"
                 class="relative w-full p-4 rounded-2xl text-left transition-all duration-200 flex items-center justify-between border bg-gradient-to-r from-[#041409] to-[#020b05] border-emerald-900/80 hover:border-amber-400/80 hover:from-emerald-950 hover:to-[#041409] shadow-md hover:shadow-[0_0_20px_rgba(251,191,36,0.12)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
-                <!-- Left Content: Icon + Labels -->
                 <div class="flex items-center gap-3.5 min-w-0">
                   <div
                     class="h-11 w-11 rounded-xl bg-emerald-950 border border-emerald-800/80 group-hover:border-amber-400/50 group-hover:bg-amber-500/10 flex items-center justify-center text-emerald-400 group-hover:text-amber-400 transition-colors shrink-0"
                   >
-                    <!-- Service Icons -->
                     <svg
                       v-if="service.icon === 'id'"
                       xmlns="http://www.w3.org/2000/svg"
@@ -233,7 +261,7 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        d="M3 8l7.89 5.26a2 2 0 002 22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                       />
                     </svg>
                   </div>
@@ -252,7 +280,6 @@
                   </div>
                 </div>
 
-                <!-- Right Action Indicator / Spinner -->
                 <div class="shrink-0 pl-2">
                   <template
                     v-if="isClaiming && selectedService === service.title"
@@ -303,7 +330,6 @@
               </button>
             </div>
 
-            <!-- Error Banner -->
             <div
               v-if="errorMessage"
               class="w-full p-3 bg-red-950/50 border border-red-800 rounded-lg text-red-400 text-xs font-semibold text-center"
@@ -326,7 +352,6 @@
             ✓ Ticket Generated
           </div>
 
-          <!-- Countdown Visual Ring -->
           <div class="relative my-1 flex items-center justify-center">
             <svg class="h-24 w-24 transform -rotate-90">
               <circle
@@ -359,7 +384,6 @@
             </div>
           </div>
 
-          <!-- Priority Number -->
           <div class="space-y-1 w-full">
             <p
               class="text-slate-400 uppercase tracking-widest text-xs font-bold"
@@ -470,8 +494,17 @@ definePageMeta({ layout: false });
 /* STATE MANAGEMENT                                                           */
 /* -------------------------------------------------------------------------- */
 
+// Stations Tracking (5 Stations)
+const stations = ref({
+  1: "---",
+  2: "---",
+  3: "---",
+  4: "---",
+  5: "---",
+});
+const activeStation = ref(null);
+
 // Display State
-const current = ref("---");
 const currentTime = ref("");
 const isNew = ref(false);
 const audioUnlocked = ref(false);
@@ -576,7 +609,7 @@ const forceReset = () => {
   isClaiming.value = false;
 };
 
-const announceTicket = (number) => {
+const announceTicket = (number, station) => {
   if (
     !number ||
     number === "---" ||
@@ -587,8 +620,11 @@ const announceTicket = (number) => {
   }
 
   window.speechSynthesis.cancel();
+  const stationText = station
+    ? `proceed to station ${station}`
+    : "proceed to the M I S station";
   const msg = new SpeechSynthesisUtterance(
-    `Now serving ticket number ${number}. Please proceed to the M I S station.`,
+    `Ticket number ${number}, please ${stationText}.`,
   );
   msg.rate = 0.85;
   msg.pitch = 1.1;
@@ -600,15 +636,15 @@ const unlockAudio = () => {
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
   }
   audioUnlocked.value = true;
-  if (current.value !== "---") {
-    announceTicket(current.value);
-  }
 };
 
 const fetchQueue = async () => {
   try {
     const res = await $fetch("/api/queue/display");
-    current.value = res.current || "---";
+    // Expect res.stations to be { 1: '001', 2: '002', ... } or adjust map accordingly
+    if (res.stations) {
+      stations.value = { ...stations.value, ...res.stations };
+    }
   } catch (err) {
     console.error("Failed to sync initial queue display:", err);
   }
@@ -619,14 +655,11 @@ const fetchQueue = async () => {
 /* -------------------------------------------------------------------------- */
 
 onMounted(async () => {
-  // Live clock initialization
   updateClock();
   clockInterval = setInterval(updateClock, 1000);
 
-  // Initial queue state fetch
   await fetchQueue();
 
-  // SSE Listener Setup
   if (typeof window !== "undefined") {
     eventSource = new EventSource("/api/queue/events");
 
@@ -636,10 +669,13 @@ onMounted(async () => {
         if (data.heartbeat) return;
 
         if (data.type === "serving" || data.type === "recall") {
-          current.value = data.ticket;
+          const targetStation = data.station;
+
+          stations.value[targetStation] = data.ticket;
+          activeStation.value = targetStation;
 
           if (audioUnlocked.value) {
-            announceTicket(data.ticket);
+            announceTicket(data.ticket, targetStation);
           }
 
           if (data.type === "serving") {
@@ -662,12 +698,10 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  // Clear all registered intervals & timeouts
   if (clockInterval) clearInterval(clockInterval);
   if (timerInterval) clearInterval(timerInterval);
   if (isNewTimeout) clearTimeout(isNewTimeout);
 
-  // Close SSE connection
   if (eventSource) {
     eventSource.close();
     eventSource = null;

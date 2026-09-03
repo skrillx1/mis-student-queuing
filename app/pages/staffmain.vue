@@ -242,10 +242,23 @@
           <!-- Actions -->
           <div class="flex items-center gap-2 justify-end">
             <button
-              @click="markDone(q.id)"
-              class="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all cursor-pointer"
+              @click="rejectTicket(q.id)"
+              class="h-9 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-lg font-medium text-xs transition-all cursor-pointer flex items-center gap-1.5"
             >
-              Done
+              <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Reject / Cancel
             </button>
           </div>
         </div>
@@ -584,6 +597,35 @@ const markDone = async (id) => {
   });
 
   delete idPictureMap[id];
+  await fetchQueues();
+};
+
+const rejectTicket = async (id) => {
+  if (!id) return;
+
+  const confirmed = confirm(
+    "Are you sure you want to cancel/reject this waiting ticket?",
+  );
+  if (!confirmed) return;
+
+  // Option A: If your backend has a dedicated cancel/reject endpoint
+  await $fetch("/api/staff/cancel", {
+    method: "POST",
+    body: { id, status: "rejected" },
+  });
+
+  /* 
+  // Option B: If your backend reuses the status update endpoint, update as needed:
+  await $fetch("/api/staff/done", {
+    method: "POST",
+    body: { id, status: "cancelled" },
+  });
+  */
+
+  if (idPictureMap[id]) {
+    delete idPictureMap[id];
+  }
+
   await fetchQueues();
 };
 

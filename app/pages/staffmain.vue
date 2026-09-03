@@ -82,11 +82,19 @@
       <div
         v-for="stationNum in stations"
         :key="stationNum"
+        :draggable="!!getStationTicket(stationNum)"
+        @dragstart="
+          getStationTicket(stationNum) &&
+          onDragStart($event, getStationTicket(stationNum))
+        "
         @dragover.prevent="onDragOver($event, stationNum)"
         @dragleave="onDragLeave(stationNum)"
         @drop="onDrop($event, stationNum)"
         :class="[
           'p-3.5 rounded-2xl border-2 transition-all flex flex-col justify-between min-h-[140px]',
+          getStationTicket(stationNum)
+            ? 'cursor-grab active:cursor-grabbing'
+            : '',
           activeStationHover === stationNum
             ? 'border-dashed border-emerald-500 bg-emerald-100/70 scale-[1.02]'
             : getStationTicket(stationNum)
@@ -431,7 +439,32 @@ const onDrop = async (event, stationNum) => {
 
   const ticket = JSON.parse(rawData);
 
-  // Send request to set the station column in DB and change status to serving
+  // Avoid unnecessary API calls if dropped on the exact same station
+  if (ticket.status === "serving" && Number(ticket.station) === stationNum) {
+    return;
+  }
+
+  const existingTicket = getStationTicket(stationNum);
+
+  // Scenario A: The target station already has a serving ticket
+  if (existingTicket) {
+    // Option 1 (Default): If dropping a ticket onto an occupied station, swap their stations
+    if (ticket.status === "serving" && ticket.station) {
+      await Promise.all([
+        assignStation(ticket.id, stationNum),
+        assignStation(existingTicket.id, Number(ticket.station)),
+      ]);
+      return;
+    }
+
+    // Option 2: If dragging from waiting/on-hold to an occupied station, notify/prevent overwrite
+    alert(
+      `Station ${stationNum} is currently serving ticket #${existingTicket.ticketnumber}. Clear or complete it first.`,
+    );
+    return;
+  }
+
+  // Scenario B: Drop onto an empty target station
   await assignStation(ticket.id, stationNum);
 };
 

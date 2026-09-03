@@ -129,28 +129,78 @@
           <p class="text-[11px] font-medium text-slate-400">Drop ticket here</p>
         </div>
 
-        <!-- STATION ACTIONS (RECALL, HOLD & DONE FOR SERVING TICKETS) -->
+        <!-- STATION ACTIONS (ONLY RENDER IF A TICKET IS CURRENTLY SERVING) -->
         <div
           v-if="getStationTicket(stationNum)"
-          class="pt-2 border-t border-emerald-200/50 flex items-center justify-between gap-1"
+          class="pt-2 border-t border-emerald-200/60 grid grid-cols-3 gap-1"
         >
+          <!-- RECALL BUTTON -->
           <button
             @click="recallTicket(getStationTicket(stationNum).id, stationNum)"
-            class="text-[10px] font-bold text-blue-700 hover:text-blue-900 underline cursor-pointer"
+            type="button"
+            title="Re-announce ticket"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200/80 hover:bg-sky-600 hover:text-white hover:border-sky-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
-            Recall
+            <svg
+              class="w-3 h-3 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.2"
+                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.684A1.76 1.76 0 013 12c0-.97.784-1.76 1.76-1.76.31 0 .6.08.852.222"
+              />
+            </svg>
+            <span>Recall</span>
           </button>
+
+          <!-- HOLD BUTTON -->
           <button
             @click="holdTicket(getStationTicket(stationNum).id)"
-            class="text-[10px] font-bold text-orange-700 hover:text-orange-900 underline cursor-pointer"
+            type="button"
+            title="Put ticket on hold"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 hover:bg-amber-600 hover:text-white hover:border-amber-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
-            Hold
+            <svg
+              class="w-3 h-3 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.2"
+                d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>Hold</span>
           </button>
+
+          <!-- DONE BUTTON -->
           <button
             @click="markDone(getStationTicket(stationNum).id)"
-            class="text-[10px] font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
+            type="button"
+            title="Complete ticket session"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300/80 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
-            Done
+            <svg
+              class="w-3 h-3 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <span>Done</span>
           </button>
         </div>
       </div>

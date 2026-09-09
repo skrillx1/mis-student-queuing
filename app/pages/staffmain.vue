@@ -31,8 +31,81 @@
       </div>
     </div>
 
-    <!-- FILTERS -->
+    <!-- FILTERS & NOTIFICATION CONTROLS -->
     <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+      <!-- NOTIFICATION SOUND TOGGLE -->
+      <button
+        @click="isMuted = !isMuted"
+        type="button"
+        :title="isMuted ? 'Unmute queue alerts' : 'Mute queue alerts'"
+        :class="[
+          'h-10 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer',
+          isMuted
+            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+        ]"
+      >
+        <svg
+          v-if="!isMuted"
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          />
+        </svg>
+        <svg
+          v-else
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+          />
+        </svg>
+        <span>{{ isMuted ? "Sound Off" : "Sound On" }}</span>
+      </button>
+
+      <!-- DESKTOP NOTIFICATION PERMISSION TOGGLE -->
+      <button
+        v-if="notificationsSupported && notificationPermission !== 'granted'"
+        @click="requestNotificationPermission"
+        type="button"
+        title="Enable desktop notifications"
+        class="h-10 px-3 bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+      >
+        <svg
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+        <span>Enable Alerts</span>
+      </button>
+
       <select
         v-model="filters.type"
         class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all cursor-pointer"
@@ -209,7 +282,7 @@
 
   <!-- MAIN QUEUE WORKSPACE -->
   <div
-    class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs"
+    class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs relative"
   >
     <div
       class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100"
@@ -421,6 +494,66 @@
       </div>
     </template>
   </div>
+
+  <!-- VISUAL TOAST NOTIFICATION CONTAINER -->
+  <Transition
+    enter-active-class="transition transform duration-300 ease-out"
+    enter-from-class="translate-y-5 opacity-0 scale-95"
+    enter-to-class="translate-y-0 opacity-100 scale-100"
+    leave-active-class="transition transform duration-200 ease-in"
+    leave-from-class="translate-y-0 opacity-100 scale-100"
+    leave-to-class="translate-y-5 opacity-0 scale-95"
+  >
+    <div
+      v-if="toast.show"
+      class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-900 text-white p-4 rounded-2xl shadow-xl border border-emerald-700/50 max-w-sm"
+    >
+      <div class="p-2 bg-emerald-800 rounded-xl shrink-0 text-amber-400">
+        <svg
+          class="w-6 h-6 animate-bounce"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+      </div>
+      <div class="flex-1 pr-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">
+          New Ticket Joined
+        </h4>
+        <p class="text-sm font-extrabold font-mono text-white mt-0.5">
+          #{{ toast.ticketnumber }} - {{ toast.fullname }}
+        </p>
+        <p class="text-[11px] text-emerald-200 truncate">
+          {{ toast.servicetype }}
+        </p>
+      </div>
+      <button
+        @click="toast.show = false"
+        class="text-emerald-300 hover:text-white p-1 rounded-lg transition-colors"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -439,6 +572,21 @@ const idPictureMap = reactive({});
 const stations = [1, 2, 3, 4, 5];
 const activeStationHover = ref(null);
 
+// Notification and audio settings
+const isMuted = ref(false);
+const notificationsSupported = ref(false);
+const notificationPermission = ref("default");
+const previousQueueIds = ref(new Set());
+const isInitialLoad = ref(true);
+
+const toast = reactive({
+  show: false,
+  ticketnumber: "",
+  fullname: "",
+  servicetype: "",
+});
+
+let toastTimeout = null;
 let pollInterval = null;
 let searchTimeout = null;
 
@@ -468,6 +616,77 @@ const onHoldQueues = computed(() =>
 const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
+
+/* ================= NOTIFICATION & AUDIO HELPER ================= */
+const playChimeSound = () => {
+  if (isMuted.value) return;
+
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // Two-tone chime alert
+    const playNote = (freq, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + startTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        ctx.currentTime + startTime + duration,
+      );
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration);
+    };
+
+    playNote(587.33, 0, 0.25); // D5
+    playNote(880, 0.15, 0.4); // A5
+  } catch {
+    // Graceful fallback if web audio API is restricted by user gesture requirements
+  }
+};
+
+const requestNotificationPermission = async () => {
+  if ("Notification" in window) {
+    const permission = await Notification.requestPermission();
+    notificationPermission.value = permission;
+  }
+};
+
+const triggerNewQueueNotification = (ticket) => {
+  // 1. Audio Ping
+  playChimeSound();
+
+  // 2. On-screen Toast
+  toast.ticketnumber = ticket.ticketnumber;
+  toast.fullname = ticket.fullname || "New Client";
+  toast.servicetype = ticket.servicetype || "General Service";
+  toast.show = true;
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.show = false;
+  }, 5000);
+
+  // 3. Browser Desktop Notification (if granted)
+  if (
+    notificationsSupported.value &&
+    notificationPermission.value === "granted"
+  ) {
+    new Notification(`New Ticket #${ticket.ticketnumber}`, {
+      body: `${ticket.fullname || "Client"} - ${ticket.servicetype}`,
+      icon: "/favicon.ico",
+    });
+  }
+};
 
 /* ================= HELPER FUNCTIONS ================= */
 const isIdProcessing = (serviceType) => {
@@ -511,7 +730,6 @@ const onDrop = async (event, stationNum) => {
 
   // Scenario A: The target station already has a serving ticket
   if (existingTicket) {
-    // Option 1 (Default): If dropping a ticket onto an occupied station, swap their stations
     if (ticket.status === "serving" && ticket.station) {
       await Promise.all([
         assignStation(ticket.id, stationNum),
@@ -520,7 +738,6 @@ const onDrop = async (event, stationNum) => {
       return;
     }
 
-    // Option 2: If dragging from waiting/on-hold to an occupied station, notify/prevent overwrite
     alert(
       `Station ${stationNum} is currently serving ticket #${existingTicket.ticketnumber}. Clear or complete it first.`,
     );
@@ -582,7 +799,26 @@ const fetchQueues = async () => {
   const res = await $fetch("/api/staff/queues", {
     query: { ...filters },
   });
-  queues.value = res;
+
+  const incomingQueues = res || [];
+
+  // Detect newly added tickets in the waiting list
+  if (!isInitialLoad.value) {
+    const freshWaiting = incomingQueues.filter(
+      (q) => q.status === "waiting" && !previousQueueIds.value.has(q.id),
+    );
+
+    if (freshWaiting.length > 0) {
+      // Alert staff about the newest incoming ticket
+      triggerNewQueueNotification(freshWaiting[freshWaiting.length - 1]);
+    }
+  }
+
+  // Update set of existing queue IDs
+  previousQueueIds.value = new Set(incomingQueues.map((q) => q.id));
+  isInitialLoad.value = false;
+
+  queues.value = incomingQueues;
 };
 
 const assignStation = async (ticketId, stationNum) => {
@@ -603,7 +839,6 @@ const assignStation = async (ticketId, stationNum) => {
 const recallTicket = async (ticketId, stationNum) => {
   if (!ticketId || !stationNum) return;
 
-  // Triggers call endpoint to re-broadcast WebSocket / SSE notification for audio/display announcements
   await $fetch("/api/staff/call", {
     method: "POST",
     body: {
@@ -658,19 +893,10 @@ const rejectTicket = async (id) => {
   );
   if (!confirmed) return;
 
-  // Option A: If your backend has a dedicated cancel/reject endpoint
   await $fetch("/api/staff/cancel", {
     method: "POST",
     body: { id, status: "rejected" },
   });
-
-  /* 
-  // Option B: If your backend reuses the status update endpoint, update as needed:
-  await $fetch("/api/staff/done", {
-    method: "POST",
-    body: { id, status: "cancelled" },
-  });
-  */
 
   if (idPictureMap[id]) {
     delete idPictureMap[id];
@@ -681,14 +907,19 @@ const rejectTicket = async (id) => {
 
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
+  // Check notification support
+  if (typeof window !== "undefined" && "Notification" in window) {
+    notificationsSupported.value = true;
+    notificationPermission.value = Notification.permission;
+  }
+
   await fetchQueues();
   managePollingState();
 });
 
 onBeforeUnmount(() => {
   stopPolling();
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
+  if (searchTimeout) clearTimeout(searchTimeout);
+  if (toastTimeout) clearTimeout(toastTimeout);
 });
 </script>

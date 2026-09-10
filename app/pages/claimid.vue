@@ -668,9 +668,21 @@ onMounted(async () => {
         const data = JSON.parse(event.data);
         if (data.heartbeat) return;
 
-        if (data.type === "serving" || data.type === "recall") {
+        if (
+          data.type === "serving" ||
+          data.type === "recall" ||
+          data.type === "transfer"
+        ) {
           const targetStation = data.station;
 
+          // 1. Remove the ticket from any previous station displaying it
+          Object.keys(stations.value).forEach((st) => {
+            if (stations.value[st] === data.ticket) {
+              stations.value[st] = "---";
+            }
+          });
+
+          // 2. Assign ticket to the new station
           stations.value[targetStation] = data.ticket;
           activeStation.value = targetStation;
 
@@ -678,7 +690,7 @@ onMounted(async () => {
             announceTicket(data.ticket, targetStation);
           }
 
-          if (data.type === "serving") {
+          if (data.type === "serving" || data.type === "transfer") {
             isNew.value = true;
             if (isNewTimeout) clearTimeout(isNewTimeout);
             isNewTimeout = setTimeout(() => {

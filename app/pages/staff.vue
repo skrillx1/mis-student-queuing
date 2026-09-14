@@ -31,13 +31,86 @@
       </div>
     </div>
 
-    <!-- FILTERS -->
+    <!-- FILTERS & NOTIFICATION CONTROLS -->
     <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+      <!-- NOTIFICATION SOUND TOGGLE -->
+      <button
+        @click="isMuted = !isMuted"
+        type="button"
+        :title="isMuted ? 'Unmute queue alerts' : 'Mute queue alerts'"
+        :class="[
+          'h-10 px-3 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer',
+          isMuted
+            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+        ]"
+      >
+        <svg
+          v-if="!isMuted"
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          />
+        </svg>
+        <svg
+          v-else
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+          />
+        </svg>
+        <span>{{ isMuted ? "Sound Off" : "Sound On" }}</span>
+      </button>
+
+      <!-- DESKTOP NOTIFICATION PERMISSION TOGGLE -->
+      <button
+        v-if="notificationsSupported && notificationPermission !== 'granted'"
+        @click="requestNotificationPermission"
+        type="button"
+        title="Enable desktop notifications"
+        class="h-10 px-3 bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+      >
+        <svg
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+        <span>Enable Alerts</span>
+      </button>
+
       <select
         v-model="filters.type"
         class="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all cursor-pointer"
       >
-        <option value="active">All (Serving + Waiting)</option>
+        <option value="active">All Active (Waiting / Station Assigned)</option>
         <option value="onhold">On Hold Only</option>
         <option value="done">Completed Only</option>
       </select>
@@ -71,46 +144,78 @@
     </div>
   </header>
 
-  <!-- MAIN GRID -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- QUEUE WORKSPACE (LEFT 2 COLS) -->
-    <div
-      class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs"
-    >
+  <!-- STATIONS HEADER DROP ZONES (SERVING TICKETS HERE) -->
+  <section class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">
+        Counter Stations (Drag Ticket to Assign Station)
+      </h2>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
       <div
-        class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100"
+        v-for="stationNum in stations"
+        :key="stationNum"
+        :draggable="!!getStationTicket(stationNum)"
+        @dragstart="
+          getStationTicket(stationNum) &&
+          onDragStart($event, getStationTicket(stationNum))
+        "
+        @dragover.prevent="onDragOver($event, stationNum)"
+        @dragleave="onDragLeave(stationNum)"
+        @drop="onDrop($event, stationNum)"
+        :class="[
+          'p-3.5 rounded-2xl border-2 transition-all flex flex-col justify-between min-h-[140px]',
+          getStationTicket(stationNum)
+            ? 'cursor-grab active:cursor-grabbing'
+            : '',
+          activeStationHover === stationNum
+            ? 'border-dashed border-emerald-500 bg-emerald-100/70 scale-[1.02]'
+            : getStationTicket(stationNum)
+              ? 'border-solid border-emerald-600/40 bg-emerald-50/50 shadow-xs'
+              : 'border-dashed border-slate-200 bg-slate-50/60',
+        ]"
       >
-        <div class="flex items-center gap-2">
-          <h2 class="font-bold text-slate-800 text-base tracking-tight">
-            Queue Workspace
-          </h2>
+        <div class="flex items-center justify-between w-full">
+          <span
+            class="text-xs font-black uppercase text-slate-500 tracking-wider"
+          >
+            Station {{ stationNum }}
+          </span>
+          <span
+            v-if="getStationTicket(stationNum)"
+            class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"
+          ></span>
         </div>
-        <span
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/60"
-        >
-          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-          Total Tickets:
-          {{
-            servingQueues.length +
-            waitingQueues.length +
-            onHoldQueues.length +
-            doneQueues.length
-          }}
-        </span>
-      </div>
 
-      <!-- ACTIVE TICKETS FILTER -->
-      <template v-if="filters.type === 'active'">
-        <!-- EMPTY STATE -->
-        <div
-          v-if="!servingQueues.length && !waitingQueues.length"
-          class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
-        >
+        <div v-if="getStationTicket(stationNum)" class="my-1">
+          <div class="font-mono font-black text-2xl text-emerald-950">
+            {{ getStationTicket(stationNum).ticketnumber }}
+          </div>
           <div
-            class="w-12 h-12 mx-auto mb-3 text-slate-300 bg-slate-100 rounded-full flex items-center justify-center"
+            class="text-[11px] font-bold text-slate-700 truncate max-w-[130px]"
+          >
+            {{ getStationTicket(stationNum).fullname || "No Name Provided" }}
+          </div>
+        </div>
+
+        <div v-else class="my-auto text-center py-2">
+          <p class="text-[11px] font-medium text-slate-400">Drop ticket here</p>
+        </div>
+
+        <!-- STATION ACTIONS (ONLY RENDER IF A TICKET IS CURRENTLY SERVING) -->
+        <div
+          v-if="getStationTicket(stationNum)"
+          class="pt-2 border-t border-emerald-200/60 grid grid-cols-3 gap-1"
+        >
+          <!-- RECALL BUTTON -->
+          <button
+            @click="recallTicket(getStationTicket(stationNum).id, stationNum)"
+            type="button"
+            title="Re-announce ticket"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200/80 hover:bg-sky-600 hover:text-white hover:border-sky-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
             <svg
-              class="w-6 h-6"
+              class="w-3 h-3 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -118,424 +223,45 @@
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                stroke-width="2.2"
+                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.684A1.76 1.76 0 013 12c0-.97.784-1.76 1.76-1.76.31 0 .6.08.852.222"
               />
             </svg>
-          </div>
-          <p class="text-sm font-semibold text-slate-600">
-            No active tickets found
-          </p>
-          <p class="text-xs text-slate-400 mt-1">
-            There are currently no tickets in serving or waiting state.
-          </p>
-        </div>
+            <span>Recall</span>
+          </button>
 
-        <!-- NOW SERVING SECTION -->
-        <div v-if="servingQueues.length" class="mb-6 space-y-3">
-          <div class="flex items-center gap-2">
-            <span class="relative flex h-2.5 w-2.5">
-              <span
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
-              ></span>
-              <span
-                class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"
-              ></span>
-            </span>
-            <p
-              class="text-xs uppercase font-bold tracking-wider text-emerald-800"
-            >
-              Now Serving
-            </p>
-          </div>
-
-          <div
-            v-for="q in servingQueues"
-            :key="q.id"
-            class="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-emerald-600 border border-emerald-200/60 bg-emerald-50/40 hover:bg-emerald-50/80 transition-all shadow-2xs"
-          >
-            <div class="flex items-center gap-4 flex-1">
-              <div
-                class="flex flex-col items-center justify-center bg-emerald-900 text-amber-300 font-mono font-black text-2xl tracking-wider px-4 py-2 rounded-xl shadow-xs min-w-[90px] text-center"
-              >
-                {{ q.ticketnumber }}
-              </div>
-              <div>
-                <h3 class="font-bold text-slate-900 text-base leading-snug">
-                  {{ q.fullname }}
-                </h3>
-                <div class="flex items-center gap-2 mt-0.5">
-                  <span
-                    class="inline-block text-xs font-semibold px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-md"
-                  >
-                    {{ q.servicetype }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Filename Input for ID Processing -->
-            <div
-              v-if="isIdProcessing(q.servicetype)"
-              class="flex flex-col gap-1 w-full sm:w-auto"
-            >
-              <input
-                v-model="idPictureMap[q.id]"
-                type="text"
-                placeholder="ID Picture Filename..."
-                class="h-9 text-xs px-3 bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 w-full sm:w-48 transition-all"
-              />
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2 justify-end">
-              <button
-                @click="markDone(q.id)"
-                class="h-9 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white rounded-lg font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Done
-              </button>
-              <button
-                @click="holdTicket(q.id)"
-                class="h-9 px-3.5 bg-orange-50 hover:bg-orange-100 active:scale-[0.98] text-orange-800 border border-orange-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Hold
-              </button>
-              <button
-                @click="recallTicket(q.id)"
-                class="h-9 px-3.5 bg-amber-50 hover:bg-amber-100 active:scale-[0.98] text-amber-800 border border-amber-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                  />
-                </svg>
-                Recall
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <hr
-          v-if="servingQueues.length && waitingQueues.length"
-          class="my-6 border-slate-100"
-        />
-
-        <!-- WAITING LIST SECTION -->
-        <div v-if="waitingQueues.length" class="space-y-3">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <p
-              class="text-xs uppercase font-bold tracking-wider text-amber-800"
-            >
-              Waiting List ({{ waitingQueues.length }})
-            </p>
-          </div>
-
-          <div
-            v-for="q in waitingQueues"
-            :key="q.id"
-            class="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-amber-500 border border-slate-200/80 bg-white hover:border-amber-400 hover:shadow-xs transition-all"
-          >
-            <div class="flex items-center gap-4 flex-1">
-              <div
-                class="flex flex-col items-center justify-center bg-amber-50 text-amber-900 border border-amber-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
-              >
-                {{ q.ticketnumber }}
-              </div>
-              <div>
-                <h3 class="font-bold text-slate-800 text-sm sm:text-base">
-                  {{ q.fullname }}
-                </h3>
-                <p class="text-xs font-medium text-slate-500 mt-0.5">
-                  {{ q.servicetype }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Filename Input for ID Processing -->
-            <div
-              v-if="isIdProcessing(q.servicetype)"
-              class="flex flex-col gap-1 w-full sm:w-auto"
-            >
-              <input
-                v-model="idPictureMap[q.id]"
-                type="text"
-                placeholder="ID Picture Filename..."
-                class="h-9 text-xs px-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
-              />
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2 justify-end">
-              <button
-                @click="holdTicket(q.id)"
-                class="h-9 px-3.5 bg-orange-50 hover:bg-orange-100 active:scale-[0.98] text-orange-800 border border-orange-300 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                Hold
-              </button>
-              <button
-                @click="markDone(q.id)"
-                class="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all cursor-pointer"
-              >
-                Done
-              </button>
-              <button
-                @click="callTicket(q.id)"
-                :disabled="hasActiveServing"
-                :class="[
-                  'h-9 px-4 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 rounded-lg',
-                  hasActiveServing
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-                    : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
-                ]"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                  />
-                </svg>
-                Call
-              </button>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <!-- ON HOLD TICKETS SECTION -->
-      <template v-else-if="filters.type === 'onhold'">
-        <div class="space-y-3">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-            <p
-              class="text-xs uppercase font-bold tracking-wider text-orange-800"
-            >
-              On Hold Tickets ({{ onHoldQueues.length }})
-            </p>
-          </div>
-
-          <div
-            v-if="!onHoldQueues.length"
-            class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
-          >
-            <p class="text-sm font-medium text-slate-500">
-              No on-hold tickets found.
-            </p>
-          </div>
-
-          <div
-            v-for="q in onHoldQueues"
-            :key="q.id"
-            class="flex items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-orange-500 border border-slate-200/80 bg-white hover:border-orange-400 hover:shadow-xs transition-all"
-          >
-            <div class="flex items-center gap-4 flex-1">
-              <div
-                class="flex flex-col items-center justify-center bg-orange-50 text-orange-900 border border-orange-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
-              >
-                {{ q.ticketnumber }}
-              </div>
-              <div>
-                <h3 class="font-bold text-slate-800 text-sm sm:text-base">
-                  {{ q.fullname }}
-                </h3>
-                <p class="text-xs font-medium text-slate-500 mt-0.5">
-                  {{ q.servicetype }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2 justify-end">
-              <button
-                @click="markDone(q.id)"
-                class="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all cursor-pointer"
-              >
-                Done
-              </button>
-              <button
-                @click="callTicket(q.id)"
-                :disabled="hasActiveServing"
-                :class="[
-                  'h-9 px-4 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 rounded-lg',
-                  hasActiveServing
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-                    : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
-                ]"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                  />
-                </svg>
-                Call
-              </button>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <!-- COMPLETED SESSIONS SECTION -->
-      <template v-else>
-        <div class="space-y-3">
-          <p class="text-xs uppercase font-bold tracking-wider text-slate-400">
-            Completed Sessions
-          </p>
-
-          <div
-            v-if="!doneQueues.length"
-            class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
-          >
-            <p class="text-sm font-medium text-slate-500">
-              No completed tickets found for this period.
-            </p>
-          </div>
-
-          <div
-            v-for="q in doneQueues"
-            :key="q.id"
-            class="flex items-center justify-between gap-4 p-3.5 rounded-xl border border-slate-200/60 bg-slate-50/60 opacity-80 hover:opacity-100 transition-all"
-          >
-            <div class="flex items-center gap-4">
-              <div
-                class="font-mono font-bold text-slate-500 bg-slate-200/60 text-base px-3 py-1 rounded-lg min-w-[80px] text-center"
-              >
-                {{ q.ticketnumber }}
-              </div>
-              <div>
-                <p class="font-semibold text-slate-700 text-sm">
-                  {{ q.fullname }}
-                </p>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  {{ q.servicetype }}
-                  <span
-                    v-if="q.id_picture_filename"
-                    class="font-mono text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.2 rounded ml-1"
-                  >
-                    {{ q.id_picture_filename }}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <span
-                class="hidden sm:inline-block text-[11px] font-medium text-slate-500 bg-slate-200/60 px-2.5 py-1 rounded-full"
-              >
-                Finished
-              </span>
-              <button
-                @click="recallTicket(q.id)"
-                class="h-8 px-3 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-              >
-                Recall
-              </button>
-            </div>
-          </div>
-        </div>
-      </template>
-    </div>
-
-    <!-- SIDEBAR CONTROLS (RIGHT 1 COL) -->
-    <div class="space-y-5">
-      <div
-        class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-6"
-      >
-        <h2
-          class="font-bold text-slate-800 text-base tracking-tight pb-3 border-b border-slate-100 flex items-center justify-between"
-        >
-          Live Display
-          <span
-            class="inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded"
-          >
-            <span
-              class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
-            ></span>
-            Live Sync
-          </span>
-        </h2>
-
-        <!-- CURRENT SERVING DISPLAY -->
-        <div
-          class="p-6 bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-2xl shadow-md text-center relative overflow-hidden border border-emerald-800/50"
-        >
-          <div
-            class="absolute inset-0 bg-[radial-gradient(#ffffff15_1px,transparent_1px)] [background-size:12px_12px] opacity-40"
-          ></div>
-
-          <p
-            class="text-[11px] uppercase tracking-widest text-emerald-300/80 font-bold mb-1 relative z-10"
-          >
-            Now Serving
-          </p>
-          <p
-            class="text-5xl font-black tracking-wider text-amber-400 font-mono drop-shadow-md my-2 relative z-10"
-          >
-            {{ current }}
-          </p>
-          <p class="text-[10px] text-emerald-200/60 font-medium relative z-10">
-            CSU Staff Control Console
-          </p>
-        </div>
-
-        <!-- PRIMARY ACTION BUTTON -->
-        <div>
+          <!-- HOLD BUTTON -->
           <button
-            @click="nextTicket"
-            class="w-full py-3.5 px-4 bg-emerald-800 hover:bg-emerald-900 active:scale-[0.99] text-white font-black tracking-wider text-sm rounded-xl transition-all shadow-md shadow-emerald-900/10 flex items-center justify-center gap-2 cursor-pointer group"
+            @click="holdTicket(getStationTicket(stationNum).id)"
+            type="button"
+            title="Put ticket on hold"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 hover:bg-amber-600 hover:text-white hover:border-amber-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
           >
-            <span>SERVE NEXT TICKET</span>
             <svg
-              class="w-4 h-4 text-amber-400 transition-transform group-hover:translate-x-1"
+              class="w-3 h-3 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.2"
+                d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>Hold</span>
+          </button>
+
+          <!-- DONE BUTTON -->
+          <button
+            @click="markDone(getStationTicket(stationNum).id)"
+            type="button"
+            title="Complete ticket session"
+            class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300/80 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
+          >
+            <svg
+              class="w-3 h-3 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -544,42 +270,290 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2.5"
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                d="M5 13l4 4L19 7"
               />
             </svg>
+            <span>Done</span>
           </button>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <!-- MANUAL DISPATCH -->
-        <div class="pt-5 border-t border-slate-100 space-y-3">
-          <label
-            class="block text-xs font-bold text-slate-500 uppercase tracking-wider"
-          >
-            Manual Call / Dispatch
-          </label>
-          <div class="flex gap-2">
-            <input
-              v-model="manual"
-              placeholder="Ex. 001"
-              class="flex-1 h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-mono font-bold text-sm tracking-widest placeholder:font-sans placeholder:font-normal placeholder:tracking-normal focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-            />
-            <button
-              @click="callManual"
-              :disabled="hasActiveServing || !manual.trim()"
-              :class="[
-                'h-10 px-5 font-extrabold text-xs tracking-wider rounded-xl transition-all shadow-xs whitespace-nowrap',
-                hasActiveServing || !manual.trim()
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer',
-              ]"
+  <!-- MAIN QUEUE WORKSPACE -->
+  <div
+    class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs relative"
+  >
+    <div
+      class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100"
+    >
+      <h2 class="font-bold text-slate-800 text-base tracking-tight">
+        Queue Workspace
+      </h2>
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/60"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+        Total Tickets:
+        {{
+          waitingQueues.length +
+          onHoldQueues.length +
+          doneQueues.length +
+          servingQueues.length
+        }}
+      </span>
+    </div>
+
+    <!-- ACTIVE / WAITING TICKETS -->
+    <template v-if="filters.type === 'active'">
+      <div
+        v-if="!waitingQueues.length && !servingQueues.length"
+        class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
+      >
+        <p class="text-sm font-semibold text-slate-600">
+          No active tickets found
+        </p>
+        <p class="text-xs text-slate-400 mt-1">
+          There are currently no tickets waiting to be assigned.
+        </p>
+      </div>
+
+      <div v-else class="space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <p class="text-xs uppercase font-bold tracking-wider text-amber-800">
+            Waiting List ({{ waitingQueues.length }})
+          </p>
+        </div>
+
+        <div
+          v-for="q in waitingQueues"
+          :key="q.id"
+          draggable="true"
+          @dragstart="onDragStart($event, q)"
+          class="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-amber-500 border border-slate-200/80 bg-white hover:border-amber-400 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing"
+        >
+          <div class="flex items-center gap-4 flex-1">
+            <div
+              class="flex flex-col items-center justify-center bg-amber-50 text-amber-900 border border-amber-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
             >
-              CALL
+              {{ q.ticketnumber }}
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                {{ q.fullname || "No Name" }}
+              </h3>
+              <p class="text-xs font-medium text-slate-500 mt-0.5">
+                {{ q.servicetype }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Filename Input for ID Processing -->
+          <div
+            v-if="isIdProcessing(q.servicetype)"
+            class="flex flex-col gap-1 w-full sm:w-auto"
+          >
+            <input
+              v-model="idPictureMap[q.id]"
+              type="text"
+              placeholder="ID Picture Filename..."
+              class="h-9 text-xs px-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 justify-end">
+            <button
+              @click="rejectTicket(q.id)"
+              class="h-9 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-lg font-medium text-xs transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Reject / Cancel
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <!-- ON HOLD TICKETS -->
+    <template v-else-if="filters.type === 'onhold'">
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+          <p class="text-xs uppercase font-bold tracking-wider text-orange-800">
+            On Hold Tickets ({{ onHoldQueues.length }})
+          </p>
+        </div>
+
+        <div
+          v-if="!onHoldQueues.length"
+          class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
+        >
+          <p class="text-sm font-medium text-slate-500">
+            No on-hold tickets found.
+          </p>
+        </div>
+
+        <div
+          v-for="q in onHoldQueues"
+          :key="q.id"
+          draggable="true"
+          @dragstart="onDragStart($event, q)"
+          class="flex items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-orange-500 border border-slate-200/80 bg-white hover:border-orange-400 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing"
+        >
+          <div class="flex items-center gap-4 flex-1">
+            <div
+              class="flex flex-col items-center justify-center bg-orange-50 text-orange-900 border border-orange-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
+            >
+              {{ q.ticketnumber }}
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">
+                {{ q.fullname || "No Name" }}
+              </h3>
+              <p class="text-xs font-medium text-slate-500 mt-0.5">
+                {{ q.servicetype }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 justify-end">
+            <button
+              @click="markDone(q.id)"
+              class="h-9 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-xs transition-all cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- COMPLETED SESSIONS -->
+    <template v-else>
+      <div class="space-y-3">
+        <p class="text-xs uppercase font-bold tracking-wider text-slate-400">
+          Completed Sessions
+        </p>
+
+        <div
+          v-if="!doneQueues.length"
+          class="text-center py-16 px-4 my-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"
+        >
+          <p class="text-sm font-medium text-slate-500">
+            No completed tickets found for this period.
+          </p>
+        </div>
+
+        <div
+          v-for="q in doneQueues"
+          :key="q.id"
+          class="flex items-center justify-between gap-4 p-3.5 rounded-xl border border-slate-200/60 bg-slate-50/60 opacity-80"
+        >
+          <div class="flex items-center gap-4">
+            <div
+              class="font-mono font-bold text-slate-500 bg-slate-200/60 text-base px-3 py-1 rounded-lg min-w-[80px] text-center"
+            >
+              {{ q.ticketnumber }}
+            </div>
+            <div>
+              <p class="font-semibold text-slate-700 text-sm">
+                {{ q.fullname || "No Name" }}
+              </p>
+              <p class="text-xs text-slate-400 mt-0.5">
+                {{ q.servicetype }}
+                <span
+                  v-if="q.id_picture_filename"
+                  class="font-mono text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.2 rounded ml-1"
+                >
+                  {{ q.id_picture_filename }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <span
+            class="hidden sm:inline-block text-[11px] font-medium text-slate-500 bg-slate-200/60 px-2.5 py-1 rounded-full"
+          >
+            Finished
+          </span>
+        </div>
+      </div>
+    </template>
   </div>
+
+  <!-- VISUAL TOAST NOTIFICATION CONTAINER -->
+  <Transition
+    enter-active-class="transition transform duration-300 ease-out"
+    enter-from-class="translate-y-5 opacity-0 scale-95"
+    enter-to-class="translate-y-0 opacity-100 scale-100"
+    leave-active-class="transition transform duration-200 ease-in"
+    leave-from-class="translate-y-0 opacity-100 scale-100"
+    leave-to-class="translate-y-5 opacity-0 scale-95"
+  >
+    <div
+      v-if="toast.show"
+      class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-900 text-white p-4 rounded-2xl shadow-xl border border-emerald-700/50 max-w-sm"
+    >
+      <div class="p-2 bg-emerald-800 rounded-xl shrink-0 text-amber-400">
+        <svg
+          class="w-6 h-6 animate-bounce"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+      </div>
+      <div class="flex-1 pr-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400">
+          New Ticket Joined
+        </h4>
+        <p class="text-sm font-extrabold font-mono text-white mt-0.5">
+          #{{ toast.ticketnumber }} - {{ toast.fullname }}
+        </p>
+        <p class="text-[11px] text-emerald-200 truncate">
+          {{ toast.servicetype }}
+        </p>
+      </div>
+      <button
+        @click="toast.show = false"
+        class="text-emerald-300 hover:text-white p-1 rounded-lg transition-colors"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -592,12 +566,42 @@ import {
   watch,
 } from "vue";
 
+const { status } = useAuth();
+
+definePageMeta({
+  middleware: [
+    async (to) => {
+      const { status } = useAuth();
+
+      // If unauthenticated, redirect to login page
+      if (status.value === "unauthenticated") {
+        return navigateTo("/login");
+      }
+    },
+  ],
+});
+
 /* ================= STATE ================= */
 const queues = ref([]);
-const current = ref("---");
-const manual = ref("");
-const idPictureMap = reactive({}); // Stores filename by ticket ID: { [ticketId]: 'filename.jpg' }
+const idPictureMap = reactive({});
+const stations = [1, 2, 3, 4, 5];
+const activeStationHover = ref(null);
 
+// Notification and audio settings
+const isMuted = ref(false);
+const notificationsSupported = ref(false);
+const notificationPermission = ref("default");
+const previousQueueIds = ref(new Set());
+const isInitialLoad = ref(true);
+
+const toast = reactive({
+  show: false,
+  ticketnumber: "",
+  fullname: "",
+  servicetype: "",
+});
+
+let toastTimeout = null;
 let pollInterval = null;
 let searchTimeout = null;
 
@@ -628,19 +632,142 @@ const doneQueues = computed(() =>
   queues.value.filter((q) => q.status === "done"),
 );
 
-// Flag to check if any ticket is actively serving
-const hasActiveServing = computed(() => servingQueues.value.length > 0);
+/* ================= NOTIFICATION & AUDIO HELPER ================= */
+const playChimeSound = () => {
+  if (isMuted.value) return;
+
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // Two-tone chime alert
+    const playNote = (freq, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + startTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        ctx.currentTime + startTime + duration,
+      );
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + startTime);
+      osc.stop(ctx.currentTime + startTime + duration);
+    };
+
+    playNote(587.33, 0, 0.25); // D5
+    playNote(880, 0.15, 0.4); // A5
+  } catch {
+    // Graceful fallback if web audio API is restricted by user gesture requirements
+  }
+};
+
+const requestNotificationPermission = async () => {
+  if ("Notification" in window) {
+    const permission = await Notification.requestPermission();
+    notificationPermission.value = permission;
+  }
+};
+
+const triggerNewQueueNotification = (ticket) => {
+  // 1. Audio Ping
+  playChimeSound();
+
+  // 2. On-screen Toast
+  toast.ticketnumber = ticket.ticketnumber;
+  toast.fullname = ticket.fullname || "New Client";
+  toast.servicetype = ticket.servicetype || "General Service";
+  toast.show = true;
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.show = false;
+  }, 5000);
+
+  // 3. Browser Desktop Notification (if granted)
+  if (
+    notificationsSupported.value &&
+    notificationPermission.value === "granted"
+  ) {
+    new Notification(`New Ticket #${ticket.ticketnumber}`, {
+      body: `${ticket.fullname || "Client"} - ${ticket.servicetype}`,
+      icon: "/favicon.ico",
+    });
+  }
+};
 
 /* ================= HELPER FUNCTIONS ================= */
 const isIdProcessing = (serviceType) => {
   return serviceType?.toLowerCase().includes("id processing");
 };
 
+// Gets the active ticket matching a specific station number
+const getStationTicket = (stationNum) => {
+  return servingQueues.value.find((q) => Number(q.station) === stationNum);
+};
+
+/* ================= DRAG & DROP HANDLERS ================= */
+const onDragStart = (event, ticket) => {
+  event.dataTransfer.setData("text/plain", JSON.stringify(ticket));
+  event.dataTransfer.effectAllowed = "move";
+};
+
+const onDragOver = (event, stationNum) => {
+  activeStationHover.value = stationNum;
+};
+
+const onDragLeave = (stationNum) => {
+  if (activeStationHover.value === stationNum) {
+    activeStationHover.value = null;
+  }
+};
+
+const onDrop = async (event, stationNum) => {
+  activeStationHover.value = null;
+  const rawData = event.dataTransfer.getData("text/plain");
+  if (!rawData) return;
+
+  const ticket = JSON.parse(rawData);
+
+  // Avoid unnecessary API calls if dropped on the exact same station
+  if (ticket.status === "serving" && Number(ticket.station) === stationNum) {
+    return;
+  }
+
+  const existingTicket = getStationTicket(stationNum);
+
+  // Scenario A: The target station already has a serving ticket
+  if (existingTicket) {
+    if (ticket.status === "serving" && ticket.station) {
+      await Promise.all([
+        assignStation(ticket.id, stationNum),
+        assignStation(existingTicket.id, Number(ticket.station)),
+      ]);
+      return;
+    }
+
+    alert(
+      `Station ${stationNum} is currently serving ticket #${existingTicket.ticketnumber}. Clear or complete it first.`,
+    );
+    return;
+  }
+
+  // Scenario B: Drop onto an empty target station
+  await assignStation(ticket.id, stationNum);
+};
+
 /* ================= POLLING LOGIC ================= */
 const startPolling = () => {
   if (pollInterval) return;
   pollInterval = setInterval(async () => {
-    await fetchAllData();
+    await fetchQueues();
   }, 5000);
 };
 
@@ -687,31 +814,54 @@ const fetchQueues = async () => {
   const res = await $fetch("/api/staff/queues", {
     query: { ...filters },
   });
-  queues.value = res;
-};
 
-const callTicket = async (payload) => {
-  if (!payload) return;
+  const incomingQueues = res || [];
 
-  const targetId = typeof payload === "object" ? payload.id : payload;
-  const isCurrentlyServing = servingQueues.value.some((q) => q.id === targetId);
-
-  // GUARD: Prevent serving a new or on-hold ticket if another ticket is already active
-  if (hasActiveServing.value && !isCurrentlyServing) {
-    alert(
-      "You are currently serving a ticket. Please mark the active ticket as 'Done' before serving a new one.",
+  // Detect newly added tickets in the waiting list
+  if (!isInitialLoad.value) {
+    const freshWaiting = incomingQueues.filter(
+      (q) => q.status === "waiting" && !previousQueueIds.value.has(q.id),
     );
-    return;
+
+    if (freshWaiting.length > 0) {
+      // Alert staff about the newest incoming ticket
+      triggerNewQueueNotification(freshWaiting[freshWaiting.length - 1]);
+    }
   }
 
-  const requestBody = typeof payload === "object" ? payload : { id: payload };
+  // Update set of existing queue IDs
+  previousQueueIds.value = new Set(incomingQueues.map((q) => q.id));
+  isInitialLoad.value = false;
 
-  const res = await $fetch("/api/staff/call", {
+  queues.value = incomingQueues;
+};
+
+const assignStation = async (ticketId, stationNum) => {
+  if (!ticketId || !stationNum) return;
+
+  await $fetch("/api/staff/call", {
     method: "POST",
-    body: requestBody,
+    body: {
+      id: ticketId,
+      station: stationNum,
+      status: "serving",
+    },
   });
-  current.value = res.current;
+
   await fetchQueues();
+};
+
+const recallTicket = async (ticketId, stationNum) => {
+  if (!ticketId || !stationNum) return;
+
+  await $fetch("/api/staff/call", {
+    method: "POST",
+    body: {
+      id: ticketId,
+      station: stationNum,
+      status: "serving",
+    },
+  });
 };
 
 const holdTicket = async (id) => {
@@ -722,63 +872,7 @@ const holdTicket = async (id) => {
     body: { id },
   });
 
-  await fetchAllData();
-};
-
-const nextTicket = async () => {
-  const activeServing = servingQueues.value[0];
-
-  if (activeServing && isIdProcessing(activeServing.servicetype)) {
-    const filename = idPictureMap[activeServing.id]?.trim();
-    if (!filename) {
-      alert(
-        "Please enter the ID Picture Filename for the currently serving ticket before calling the next one.",
-      );
-      return;
-    }
-  }
-
-  const payload = activeServing
-    ? {
-        id: activeServing.id,
-        id_picture_filename: idPictureMap[activeServing.id],
-      }
-    : {};
-
-  const res = await $fetch("/api/staff/next", {
-    method: "POST",
-    body: payload,
-  });
-  current.value = res.current;
   await fetchQueues();
-};
-
-const recallTicket = async (id) => {
-  if (!id) return;
-  // Recalls bypass the active-serving block for the same ticket
-  const requestBody = { id };
-  const res = await $fetch("/api/staff/call", {
-    method: "POST",
-    body: requestBody,
-  });
-  current.value = res.current;
-  await fetchQueues();
-};
-
-const callManual = async () => {
-  const code = manual.value.trim();
-  if (!code) return;
-
-  // GUARD: Block manual calls if a ticket is being served
-  if (hasActiveServing.value) {
-    alert(
-      "Please complete (Mark Done) the currently serving ticket before dispatching a manual code.",
-    );
-    return;
-  }
-
-  await callTicket({ ticket: code });
-  manual.value = "";
 };
 
 const markDone = async (id) => {
@@ -806,25 +900,41 @@ const markDone = async (id) => {
   await fetchQueues();
 };
 
-const fetchCurrentServing = async () => {
-  const res = await $fetch("/api/staff/current");
-  current.value = res.current || "---";
-};
+const rejectTicket = async (id) => {
+  if (!id) return;
 
-const fetchAllData = async () => {
-  await Promise.all([fetchQueues(), fetchCurrentServing()]);
+  const confirmed = confirm(
+    "Are you sure you want to cancel/reject this waiting ticket?",
+  );
+  if (!confirmed) return;
+
+  await $fetch("/api/staff/cancel", {
+    method: "POST",
+    body: { id, status: "rejected" },
+  });
+
+  if (idPictureMap[id]) {
+    delete idPictureMap[id];
+  }
+
+  await fetchQueues();
 };
 
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
-  await fetchAllData();
+  // Check notification support
+  if (typeof window !== "undefined" && "Notification" in window) {
+    notificationsSupported.value = true;
+    notificationPermission.value = Notification.permission;
+  }
+
+  await fetchQueues();
   managePollingState();
 });
 
 onBeforeUnmount(() => {
   stopPolling();
-  if (searchTimeout) {
-    clearTimeout(searchTimeout);
-  }
+  if (searchTimeout) clearTimeout(searchTimeout);
+  if (toastTimeout) clearTimeout(toastTimeout);
 });
 </script>

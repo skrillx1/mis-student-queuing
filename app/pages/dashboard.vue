@@ -305,6 +305,21 @@
 <script setup lang="ts">
 import { ref, computed, h } from "vue";
 
+const { status } = useAuth();
+
+definePageMeta({
+  middleware: [
+    async (to) => {
+      const { status } = useAuth();
+
+      // If unauthenticated, redirect to login page
+      if (status.value === "unauthenticated") {
+        return navigateTo("/login");
+      }
+    },
+  ],
+});
+
 interface CategoryStat {
   servicetype: string;
   done: number;

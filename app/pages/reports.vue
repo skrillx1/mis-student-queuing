@@ -505,6 +505,20 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
+const { status } = useAuth();
+
+definePageMeta({
+  middleware: [
+    async (to) => {
+      const { status } = useAuth();
+
+      // If unauthenticated, redirect to login page
+      if (status.value === "unauthenticated") {
+        return navigateTo("/login");
+      }
+    },
+  ],
+});
 // State
 const filterPeriods = ["daily", "weekly", "monthly"];
 const filterType = ref("monthly");

@@ -1,6 +1,23 @@
-<!-- components/AppSidebar.vue -->
 <script setup>
-const { signOut } = useAuth();
+const { data, signOut } = useAuth();
+
+// data.value IS the user object directly
+const user = computed(() => data.value ?? {});
+
+// Check if current user has admin role
+const isAdmin = computed(() => user.value?.role?.toLowerCase() === "admin");
+
+// Dynamic initials based on name or username
+const userInitials = computed(() => {
+  const name = user.value.name || user.value.username || "";
+  if (!name) return "U";
+
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+});
 
 const handleSignOut = async () => {
   try {
@@ -8,7 +25,6 @@ const handleSignOut = async () => {
   } catch (error) {
     console.warn("Sign out endpoint error:", error);
   } finally {
-    // Force client-side navigation to login page
     await navigateTo("/login", { replace: true });
   }
 };
@@ -49,7 +65,7 @@ const handleSignOut = async () => {
             Dashboard
           </NuxtLink>
 
-          <!-- Staff Link -->
+          <!-- Ticket Management Link -->
           <NuxtLink
             to="/staff"
             active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
@@ -69,6 +85,29 @@ const handleSignOut = async () => {
               />
             </svg>
             Ticket Management
+          </NuxtLink>
+
+          <!-- Station Management Link (Admin Only) -->
+          <NuxtLink
+            v-if="isAdmin"
+            to="/stations"
+            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
+            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V10m0 11V10m0 0h4m-4 0H7"
+              />
+            </svg>
+            Station Management
           </NuxtLink>
 
           <!-- Generate Report Link -->
@@ -99,14 +138,27 @@ const handleSignOut = async () => {
     <!-- User Profile & Sign Out Footer -->
     <div class="pt-4 border-t border-slate-100 space-y-3 shrink-0">
       <div class="flex items-center gap-3">
+        <!-- Dynamic Avatar Image or Initials -->
+        <img
+          v-if="user?.image"
+          :src="user.image"
+          :alt="user.name || 'User Avatar'"
+          class="w-8 h-8 rounded-full object-cover shrink-0"
+        />
         <div
+          v-else
           class="w-8 h-8 rounded-full bg-[#003300] text-white flex items-center justify-center font-bold text-xs shrink-0"
         >
-          ADMIN
+          {{ userInitials }}
         </div>
+
         <div class="truncate">
-          <p class="text-xs font-bold text-slate-800 truncate">MIS Staff</p>
-          <p class="text-[10px] text-slate-400 truncate">mis@csu.edu.ph</p>
+          <p class="text-xs font-bold text-slate-800 truncate">
+            {{ user?.name || user?.username || "User" }}
+          </p>
+          <p class="text-[10px] text-slate-400 truncate">
+            {{ user?.email || "No email available" }}
+          </p>
         </div>
       </div>
 

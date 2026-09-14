@@ -1,4 +1,19 @@
 <!-- components/AppSidebar.vue -->
+<script setup>
+const { signOut } = useAuth();
+
+const handleSignOut = async () => {
+  try {
+    await signOut({ redirect: false });
+  } catch (error) {
+    console.warn("Sign out endpoint error:", error);
+  } finally {
+    // Force client-side navigation to login page
+    await navigateTo("/login", { replace: true });
+  }
+};
+</script>
+
 <template>
   <aside
     class="w-64 bg-white border-r border-slate-200 h-full p-4 flex flex-col justify-between shrink-0 overflow-y-auto"
@@ -81,19 +96,40 @@
       </div>
     </div>
 
-    <!-- User Profile Footer -->
-    <div
-      class="pt-4 border-t border-slate-100 flex items-center gap-3 shrink-0"
-    >
-      <div
-        class="w-8 h-8 rounded-full bg-[#003300] text-white flex items-center justify-center font-bold text-xs shrink-0"
+    <!-- User Profile & Sign Out Footer -->
+    <div class="pt-4 border-t border-slate-100 space-y-3 shrink-0">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-8 h-8 rounded-full bg-[#003300] text-white flex items-center justify-center font-bold text-xs shrink-0"
+        >
+          ADMIN
+        </div>
+        <div class="truncate">
+          <p class="text-xs font-bold text-slate-800 truncate">MIS Staff</p>
+          <p class="text-[10px] text-slate-400 truncate">mis@csu.edu.ph</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        @click="handleSignOut"
+        class="w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent transition-colors font-semibold"
       >
-        ADMIN
-      </div>
-      <div class="truncate">
-        <p class="text-xs font-bold text-slate-800 truncate">MIS Staff</p>
-        <p class="text-[10px] text-slate-400 truncate">mis@csu.edu.ph</p>
-      </div>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+        Sign Out
+      </button>
     </div>
   </aside>
 </template>

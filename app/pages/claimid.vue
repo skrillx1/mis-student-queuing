@@ -62,7 +62,7 @@
 
     <!-- MAIN SECTION: 70% / 30% LAYOUT -->
     <main class="flex-grow flex flex-col lg:flex-row z-10 overflow-hidden">
-      <!-- LEFT COLUMN (70% WIDTH): 5 STATIONS GRID DISPLAY -->
+      <!-- LEFT COLUMN (70% WIDTH): DYNAMIC STATIONS GRID DISPLAY -->
       <section
         class="w-full lg:w-[70%] flex flex-col justify-between p-6 border-b lg:border-b-0 lg:border-r border-emerald-900/60 bg-[#020b05] relative overflow-hidden"
         aria-live="polite"
@@ -96,31 +96,49 @@
           </div>
         </div>
 
-        <!-- CENTER: 5 STATIONS GRID -->
+        <!-- CENTER: DYNAMIC STATIONS GRID -->
         <div
-          class="z-10 grid grid-cols-2 md:grid-cols-3 gap-4 my-auto w-full p-2"
+          v-if="isLoadingStations"
+          class="z-10 my-auto w-full text-center py-12 text-slate-400 text-sm animate-pulse"
         >
+          Loading stations schema...
+        </div>
+
+        <div
+          v-else-if="sortedStationList.length === 0"
+          class="z-10 my-auto w-full text-center py-12 text-slate-500 text-sm"
+        >
+          No active stations configured.
+        </div>
+
+        <div
+          v-else
+          class="z-10 grid grid-cols-2 md:grid-cols-3 gap-4 my-auto w-full p-2 max-h-[75vh] overflow-y-auto"
+        >
+          <!-- SORTED STATIONS LOOP -->
           <div
-            v-for="st in [1, 2, 3, 4, 5]"
-            :key="st"
+            v-for="station in sortedStationList"
+            :key="station.code || station.id"
             class="relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300"
             :class="[
-              activeStation === st
+              activeStation === station.code
                 ? 'bg-amber-500/10 border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.15)] scale-[1.02]'
                 : 'bg-[#041409]/80 border-emerald-900/80',
             ]"
           >
-            <!-- Station Header -->
+            <!-- Station Header (Code display removed) -->
             <div
               class="flex items-center justify-between border-b border-emerald-900/50 pb-2"
             >
+              <div class="flex flex-col">
+                <span
+                  class="text-xs font-black uppercase tracking-widest text-emerald-400"
+                >
+                  {{ station.name || `Station ${station.code}` }}
+                </span>
+              </div>
               <span
-                class="text-xs font-black uppercase tracking-widest text-emerald-400"
-              >
-                Station {{ st }}
-              </span>
-              <span
-                v-if="activeStation === st && isNew"
+                v-if="activeStation === station.code && isNew"
                 class="bg-amber-400 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse"
               >
                 Called
@@ -131,13 +149,16 @@
             <div class="py-6 text-center">
               <Transition name="scale" mode="out-in">
                 <span
-                  :key="stations[st]"
+                  :key="stationTickets[station.code]"
                   class="text-4xl md:text-5xl lg:text-6xl font-black tabular-nums tracking-tighter"
                   :class="
-                    stations[st] !== '---' ? 'text-amber-400' : 'text-slate-600'
+                    stationTickets[station.code] &&
+                    stationTickets[station.code] !== '---'
+                      ? 'text-amber-400'
+                      : 'text-slate-600'
                   "
                 >
-                  {{ stations[st] || "---" }}
+                  {{ stationTickets[station.code] || "---" }}
                 </span>
               </Transition>
             </div>
@@ -147,7 +168,12 @@
               <span
                 class="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
               >
-                {{ stations[st] !== "---" ? "Now Serving" : "Available" }}
+                {{
+                  stationTickets[station.code] &&
+                  stationTickets[station.code] !== "---"
+                    ? "Now Serving"
+                    : "Available"
+                }}
               </span>
             </div>
           </div>
@@ -165,7 +191,7 @@
               <span
                 class="text-amber-400 font-black underline decoration-amber-400/40 underline-offset-4"
               >
-                Station Number
+                Station Code
               </span>
             </p>
           </div>
@@ -268,7 +294,7 @@
 
                   <div class="text-left truncate">
                     <p
-                      class="text-xs font-black uppercase tracking-wider text-emerald-700 group-hover:text-amber-400 transition-colors truncate"
+                      class="text-xs font-black uppercase tracking-wider text-emerald-400 group-hover:text-amber-400 transition-colors truncate"
                     >
                       {{ service.title }}
                     </p>
@@ -417,7 +443,7 @@
           <button
             @click="forceReset"
             aria-label="Close ticket confirmation early"
-            class="w-full py-3 px-4 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 rounded-lg text-slate-600 hover:text-white font-bold text-xs uppercase tracking-wider transition focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            class="w-full py-3 px-4 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 rounded-lg text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider transition focus:outline-none focus:ring-2 focus:ring-emerald-400"
           >
             Done / Close
           </button>
@@ -486,7 +512,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 definePageMeta({ layout: false });
 
@@ -494,22 +520,27 @@ definePageMeta({ layout: false });
 /* STATE MANAGEMENT                                                           */
 /* -------------------------------------------------------------------------- */
 
-// Stations Tracking (5 Stations)
-const stations = ref({
-  1: "---",
-  2: "---",
-  3: "---",
-  4: "---",
-  5: "---",
-});
+// Dynamic Stations state fetched from Schema API
+const stationList = ref([]);
+const stationTickets = ref({});
+const isLoadingStations = ref(true);
 const activeStation = ref(null);
+
+// COMPUTED SORTING: Sorts stations numerically (1, 2, 3...) based on code/id
+const sortedStationList = computed(() => {
+  return [...stationList.value].sort((a, b) => {
+    const valA = parseInt(String(a.code || a.id).replace(/\D/g, ""), 10) || 0;
+    const valB = parseInt(String(b.code || b.id).replace(/\D/g, ""), 10) || 0;
+    return valA - valB;
+  });
+});
 
 // Display State
 const currentTime = ref("");
 const isNew = ref(false);
 const audioUnlocked = ref(false);
 
-// Structured Service Options
+// Service Options
 const availableServices = [
   {
     title: "Claim Student ID",
@@ -556,6 +587,29 @@ const updateClock = () => {
     second: "2-digit",
     hour12: true,
   });
+};
+
+// Fetch stations schema dynamically & construct ticket mappings by station.code
+const fetchStations = async () => {
+  isLoadingStations.value = true;
+  try {
+    const res = await $fetch("/api/stations");
+    const data = Array.isArray(res) ? res : res?.stations || [];
+
+    stationList.value = data;
+
+    const initialTicketMap = {};
+    data.forEach((station) => {
+      if (station.code) {
+        initialTicketMap[station.code] = "---";
+      }
+    });
+    stationTickets.value = initialTicketMap;
+  } catch (err) {
+    console.error("Failed to fetch stations list:", err);
+  } finally {
+    isLoadingStations.value = false;
+  }
 };
 
 const claimStudentId = async (serviceName) => {
@@ -609,7 +663,7 @@ const forceReset = () => {
   isClaiming.value = false;
 };
 
-const announceTicket = (number, station) => {
+const announceTicket = (number, stationCode) => {
   if (
     !number ||
     number === "---" ||
@@ -620,8 +674,8 @@ const announceTicket = (number, station) => {
   }
 
   window.speechSynthesis.cancel();
-  const stationText = station
-    ? `proceed to station ${station}`
+  const stationText = stationCode
+    ? `proceed to station ${stationCode}`
     : "proceed to the M I S station";
   const msg = new SpeechSynthesisUtterance(
     `Ticket number ${number}, please ${stationText}.`,
@@ -641,9 +695,8 @@ const unlockAudio = () => {
 const fetchQueue = async () => {
   try {
     const res = await $fetch("/api/queue/display");
-    // Expect res.stations to be { 1: '001', 2: '002', ... } or adjust map accordingly
-    if (res.stations) {
-      stations.value = { ...stations.value, ...res.stations };
+    if (res && res.stations) {
+      stationTickets.value = { ...stationTickets.value, ...res.stations };
     }
   } catch (err) {
     console.error("Failed to sync initial queue display:", err);
@@ -658,6 +711,7 @@ onMounted(async () => {
   updateClock();
   clockInterval = setInterval(updateClock, 1000);
 
+  await fetchStations();
   await fetchQueue();
 
   if (typeof window !== "undefined") {
@@ -673,21 +727,19 @@ onMounted(async () => {
           data.type === "recall" ||
           data.type === "transfer"
         ) {
-          const targetStation = data.station;
+          const targetStationCode = data.station;
 
-          // 1. Remove the ticket from any previous station displaying it
-          Object.keys(stations.value).forEach((st) => {
-            if (stations.value[st] === data.ticket) {
-              stations.value[st] = "---";
+          Object.keys(stationTickets.value).forEach((code) => {
+            if (stationTickets.value[code] === data.ticket) {
+              stationTickets.value[code] = "---";
             }
           });
 
-          // 2. Assign ticket to the new station
-          stations.value[targetStation] = data.ticket;
-          activeStation.value = targetStation;
+          stationTickets.value[targetStationCode] = data.ticket;
+          activeStation.value = targetStationCode;
 
           if (audioUnlocked.value) {
-            announceTicket(data.ticket, targetStation);
+            announceTicket(data.ticket, targetStationCode);
           }
 
           if (data.type === "serving" || data.type === "transfer") {

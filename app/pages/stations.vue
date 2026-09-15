@@ -30,6 +30,7 @@ const showDeleteModal = ref(false);
 // Form / Selected Station State
 const selectedStation = ref(null);
 const form = reactive({
+  code: "",
   name: "",
   description: "",
 });
@@ -51,27 +52,30 @@ onMounted(() => {
   fetchStations();
 });
 
-// Filtered Stations (Search)
+// Filtered Stations (Search includes code, name, and description)
 const filteredStations = computed(() => {
   if (!searchQuery.value.trim()) return stations.value;
   const q = searchQuery.value.toLowerCase();
   return stations.value.filter(
     (s) =>
+      (s.code && s.code.toString().toLowerCase().includes(q)) ||
       s.name.toLowerCase().includes(q) ||
       (s.description && s.description.toLowerCase().includes(q)),
   );
 });
 
-// Modal Actions
 const openAddModal = () => {
-  form.name = "";
+  const nextCode = (stations.value.length + 1).toString();
+  form.code = nextCode;
+  form.name = `STATION ${nextCode}`;
   form.description = "";
   showAddModal.value = true;
 };
 
 const openEditModal = (station) => {
   selectedStation.value = station;
-  form.name = station.name;
+  form.code = station.code || "";
+  form.name = station.name || "";
   form.description = station.description || "";
   showEditModal.value = true;
 };
@@ -86,6 +90,7 @@ const closeModal = () => {
   showEditModal.value = false;
   showDeleteModal.value = false;
   selectedStation.value = null;
+  form.code = "";
   form.name = "";
   form.description = "";
 };
@@ -98,6 +103,7 @@ const handleCreateStation = async () => {
     await $fetch("/api/stations", {
       method: "POST",
       body: {
+        code: form.code,
         name: form.name.trim(),
         description: form.description.trim(),
         created_by: currentUser.value?.id,
@@ -119,6 +125,7 @@ const handleUpdateStation = async () => {
     await $fetch(`/api/stations/${selectedStation.value.id}`, {
       method: "PUT",
       body: {
+        code: form.code,
         name: form.name.trim(),
         description: form.description.trim(),
       },
@@ -214,7 +221,7 @@ const formatDate = (dateStr) => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search stations..."
+          placeholder="Search by code or name..."
           class="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
         />
       </div>
@@ -231,7 +238,7 @@ const formatDate = (dateStr) => {
             <tr
               class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold"
             >
-              <th class="py-3 px-4">ID</th>
+              <th class="py-3 px-4">Code</th>
               <th class="py-3 px-4">Station Name</th>
               <th class="py-3 px-4">Description</th>
               <th class="py-3 px-4">Created Date</th>
@@ -255,10 +262,10 @@ const formatDate = (dateStr) => {
               :key="station.id"
               class="hover:bg-slate-50/80 transition-colors"
             >
-              <td class="py-3 px-4 font-mono text-slate-500">
-                #{{ station.id }}
+              <td class="py-3 px-4 font-mono font-bold text-slate-900">
+                {{ station.code }}
               </td>
-              <td class="py-3 px-4 font-semibold text-slate-900">
+              <td class="py-3 px-4 font-semibold text-slate-700">
                 {{ station.name }}
               </td>
               <td class="py-3 px-4 text-slate-500 max-w-xs truncate">
@@ -306,13 +313,25 @@ const formatDate = (dateStr) => {
         >
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1"
+              >Station Code</label
+            >
+            <input
+              v-model="form.code"
+              type="text"
+              readonly
+              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-100 text-slate-500 font-mono font-bold cursor-not-allowed focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1"
               >Station Name</label
             >
             <input
               v-model="form.name"
               type="text"
               required
-              placeholder="e.g. Station 1"
+              placeholder="e.g. STATION 1"
               class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
             />
           </div>
@@ -366,8 +385,10 @@ const formatDate = (dateStr) => {
         <h3 class="text-base font-bold text-slate-900">Delete Station</h3>
         <p class="text-xs text-slate-600">
           Are you sure you want to delete
-          <strong class="text-slate-900">{{ selectedStation?.name }}</strong
-          >? This action cannot be undone.
+          <strong class="text-slate-900">{{ selectedStation?.name }}</strong>
+          (Code:
+          <span class="font-mono font-bold">{{ selectedStation?.code }}</span
+          >)? This action cannot be undone.
         </p>
         <div class="flex justify-end gap-2 pt-2">
           <button

@@ -1,228 +1,254 @@
 <template>
   <div
-    class="min-h-screen bg-[#061a0c] text-white flex flex-col font-sans overflow-hidden relative"
+    class="min-h-screen h-screen bg-slate-50 text-slate-800 flex flex-col font-sans overflow-hidden relative select-none antialiased"
   >
-    <!-- CSU BACKGROUND DECOR -->
+    <!-- AMBIENT BACKGROUND LIGHT GLOWS -->
     <div
-      class="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,#1a4d2e_0%,transparent_50%)] opacity-40"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-emerald-100/60 rounded-full blur-[100px] pointer-events-none"
     ></div>
     <div
-      class="absolute bottom-0 right-0 w-96 h-96 bg-yellow-600/5 blur-[150px] rounded-full"
+      class="absolute -top-24 -right-24 w-[30vw] h-[30vh] bg-amber-100/50 rounded-full blur-[80px] pointer-events-none"
     ></div>
 
-    <!-- HEADER BAR -->
+    <!-- LIGHT MINIMALIST HEADER -->
     <header
-      class="p-6 bg-black/40 backdrop-blur-2xl border-b border-white/10 flex justify-between items-center z-10 shadow-2xl"
+      class="px-4 sm:px-8 py-3.5 sm:py-4 border-b border-emerald-900/10 bg-white/80 backdrop-blur-md flex justify-between items-center z-20 shrink-0 shadow-sm"
     >
-      <div class="flex items-center gap-6">
-        <div class="relative">
-          <div
-            class="absolute -inset-1 bg-yellow-500 rounded-xl blur opacity-25"
-          ></div>
-          <div
-            class="h-14 w-28 bg-gradient-to-br from-[#0a210f] to-black border border-yellow-500/50 rounded-xl flex items-center justify-center shadow-inner relative"
+      <!-- BRANDING -->
+      <div class="flex items-center gap-2.5 sm:gap-4">
+        <div
+          class="h-8 sm:h-10 px-2.5 sm:px-4 bg-emerald-900 rounded-xl flex items-center justify-center shadow-sm"
+        >
+          <span
+            class="text-xs sm:text-base font-black tracking-widest text-amber-400"
           >
-            <span class="text-2xl font-black tracking-tighter text-yellow-500"
-              >CSUCC</span
-            >
-          </div>
+            CSU
+          </span>
         </div>
         <div>
           <h1
-            class="text-3xl font-black tracking-tighter uppercase leading-none"
+            class="text-sm sm:text-base md:text-lg font-bold tracking-tight uppercase leading-none text-emerald-950 flex items-center gap-1.5 sm:gap-2"
           >
-            MIS <span class="text-yellow-500">Queuing System</span>
+            MIS
+            <span class="text-emerald-700 font-extrabold">Queue System</span>
           </h1>
           <p
-            class="text-[10px] text-slate-400 uppercase tracking-[0.4em] font-bold mt-1"
+            class="text-[8px] sm:text-[9px] text-emerald-800/60 uppercase tracking-[0.2em] font-bold mt-0.5 sm:mt-1"
           >
             Management Information System
           </p>
         </div>
       </div>
 
-      <div class="flex gap-8 items-center">
-        <div class="h-10 w-px bg-white/10"></div>
+      <!-- STATUS & CLOCK -->
+      <div class="flex gap-3 sm:gap-6 items-center">
+        <div
+          class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-widest"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"
+            ></span>
+          </span>
+          Live Display
+        </div>
+        <div class="h-5 w-px bg-slate-200 hidden sm:block"></div>
         <div class="text-right">
-          <p class="text-3xl font-mono font-bold text-yellow-500 leading-none">
-            {{ currentTime }}
-          </p>
           <p
-            class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1"
+            class="text-lg sm:text-2xl font-mono font-bold text-emerald-950 leading-none tabular-nums tracking-tight"
           >
-            Cabadbaran City, Caraga
+            {{ currentTime }}
           </p>
         </div>
       </div>
     </header>
 
-    <main class="flex-grow flex z-10">
-      <!-- LEFT SECTION: NOW SERVING -->
-      <section
-        class="flex-[3] flex flex-col items-center justify-center relative border-r border-white/5 bg-gradient-to-b from-white/[0.01] to-transparent"
+    <!-- MAIN DISPLAY AREA (Perfect Centering Container) -->
+    <main
+      class="flex-grow flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 bg-transparent relative z-10 overflow-hidden min-h-0"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <!-- SUBTLE WATERMARK -->
+      <div
+        class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none"
       >
-        <!-- Watermark -->
-        <div
-          class="absolute inset-0 flex items-center justify-center opacity-[0.02] pointer-events-none"
+        <span
+          class="text-[25vw] font-black italic tracking-tighter text-emerald-950"
         >
-          <h1 class="text-[40rem] font-black italic">CSU</h1>
-        </div>
+          CSU
+        </span>
+      </div>
 
-        <div class="text-center z-10">
+      <!-- STATUS INDICATOR -->
+      <div class="z-10 text-center mb-3 sm:mb-4 shrink-0">
+        <div
+          class="inline-flex items-center gap-2 px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-full border border-emerald-800/15 bg-white/80 text-emerald-900 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] shadow-sm backdrop-blur-sm"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"
+            ></span>
+          </span>
+          Active Stations
+        </div>
+      </div>
+
+      <!-- AUTO-FITTING FLEX/GRID DISPLAY AREA -->
+      <div
+        v-if="isLoadingStations"
+        class="z-10 my-auto text-center py-12 text-emerald-800/60 text-xs sm:text-sm animate-pulse font-bold tracking-widest uppercase"
+      >
+        Syncing Stations...
+      </div>
+
+      <div
+        v-else-if="sortedStationList.length === 0"
+        class="z-10 my-auto text-center py-12 text-slate-400 text-xs sm:text-sm font-semibold tracking-wide"
+      >
+        No active stations configured.
+      </div>
+
+      <!-- DYNAMIC AUTO-FIT CONTAINER -->
+      <div
+        v-else
+        class="z-10 w-full max-w-7xl flex-grow flex items-center justify-center min-h-0 overflow-y-auto custom-scrollbar p-1"
+      >
+        <div
+          class="w-full h-full max-h-full flex flex-wrap justify-center items-center content-center gap-4 sm:gap-6"
+        >
+          <!-- CARD ITEM -->
           <div
-            class="inline-flex items-center gap-3 px-4 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/5 mb-6"
+            v-for="station in sortedStationList"
+            :key="station.code || station.id"
+            class="auto-fit-card relative flex flex-col justify-between p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 backdrop-blur-md shadow-sm hover:shadow-md"
+            :class="[
+              activeStation === station.code
+                ? 'bg-amber-500/10 border-amber-400/90 shadow-[0_0_25px_rgba(245,158,11,0.2)] scale-[1.02] ring-2 ring-amber-400/40'
+                : 'bg-white/90 border-slate-200/80 hover:border-emerald-300',
+            ]"
           >
-            <span class="relative flex h-3 w-3">
-              <span
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"
-              ></span>
-              <span
-                class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"
-              ></span>
-            </span>
-            <p
-              class="text-sm font-black text-yellow-500 uppercase tracking-[0.4em]"
-            >
-              Live Now Serving
-            </p>
-          </div>
-
-          <div class="relative">
-            <Transition name="scale" mode="out-in">
-              <h1
-                :key="current"
-                class="text-[26rem] font-black leading-none text-yellow-500 drop-shadow-[0_20px_70px_rgba(234,179,8,0.3)] tabular-nums tracking-tighter"
-              >
-                {{ current }}
-              </h1>
-            </Transition>
-          </div>
-
-          <div class="mt-6 space-y-4">
-            <Transition name="fade">
-              <div
-                v-if="isNew"
-                class="inline-block bg-red-600 text-white text-xs font-black px-4 py-1.5 rounded-full animate-bounce uppercase italic tracking-widest shadow-lg"
-              >
-                Next Ticket Called
-              </div>
-            </Transition>
+            <!-- CARD HEADER -->
             <div
-              class="block px-12 py-5 bg-[#0a210f]/80 border border-white/10 backdrop-blur-md rounded-3xl shadow-2xl"
+              class="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0"
             >
-              <p class="text-2xl text-slate-200 font-medium tracking-wide">
-                Please proceed to the
-                <span
-                  class="text-yellow-500 font-bold underline decoration-yellow-500/30 underline-offset-8"
-                  >MIS Main Counter</span
-                >
-              </p>
+              <span
+                class="text-[11px] sm:text-xs md:text-sm font-extrabold uppercase tracking-wider truncate mr-2"
+                :class="
+                  activeStation === station.code
+                    ? 'text-amber-800'
+                    : 'text-emerald-900'
+                "
+              >
+                {{ station.name || `Station ${station.code}` }}
+              </span>
+              <span
+                v-if="activeStation === station.code && isNew"
+                class="bg-amber-400 text-emerald-950 text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse shrink-0"
+              >
+                Called
+              </span>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- RIGHT SECTION: QUEUE LIST -->
-      <aside
-        class="flex-1 bg-black/40 backdrop-blur-sm flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.3)]"
-      >
-        <!-- NEXT UP -->
-        <div
-          class="p-8 border-b border-white/10 bg-gradient-to-br from-white/[0.03] to-transparent"
-        >
-          <p
-            class="text-xs font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2"
-          >
-            Next in line
-          </p>
-          <div class="relative group">
+            <!-- TICKET NUMBER (FLUID TYPE SCALING) -->
             <div
-              class="absolute -inset-0.5 bg-gradient-to-r from-yellow-500/50 to-transparent rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000"
-            ></div>
-            <div
-              class="relative bg-[#0a210f]/60 border border-white/10 rounded-3xl p-10 text-center shadow-xl"
+              class="my-auto py-2 text-center flex items-center justify-center flex-grow"
             >
-              <Transition name="slide-up" mode="out-in">
-                <h2
-                  :key="next"
-                  class="text-8xl font-black text-white tabular-nums tracking-tighter"
+              <Transition name="scale" mode="out-in">
+                <span
+                  :key="stationTickets[station.code]"
+                  class="font-mono font-black tabular-nums tracking-tight leading-none text-ticket"
+                  :class="
+                    stationTickets[station.code] &&
+                    stationTickets[station.code] !== '---'
+                      ? 'text-emerald-800 drop-shadow-[0_2px_8px_rgba(6,78,59,0.15)]'
+                      : 'text-slate-300'
+                  "
                 >
-                  {{ next }}
-                </h2>
+                  {{ stationTickets[station.code] || "---" }}
+                </span>
               </Transition>
             </div>
-          </div>
-        </div>
 
-        <!-- HISTORY -->
-        <div class="p-8 flex-grow overflow-hidden bg-black/20">
-          <p
-            class="text-xs font-black text-slate-600 uppercase tracking-[0.3em] mb-8"
-          >
-            Recently Called
-          </p>
-          <div class="space-y-4">
-            <TransitionGroup name="list">
-              <div
-                v-for="(num, index) in history.slice(0, 3)"
-                :key="num"
-                class="group flex justify-between items-center p-6 bg-white/[0.02] border border-white/5 rounded-2xl transition-all"
-                :style="{ opacity: 1 - index * 0.22 }"
+            <!-- CARD FOOTER -->
+            <div class="text-center pt-2 border-t border-slate-100 shrink-0">
+              <span
+                class="text-[9px] sm:text-[10px] md:text-xs font-extrabold uppercase tracking-widest"
+                :class="
+                  stationTickets[station.code] &&
+                  stationTickets[station.code] !== '---'
+                    ? 'text-amber-600'
+                    : 'text-slate-400'
+                "
               >
-                <span
-                  class="font-bold text-3xl text-slate-300 group-hover:text-yellow-500 transition-colors"
-                >
-                  {{ num }}
-                </span>
-                <div class="flex items-center gap-2">
-                  <div class="h-1.5 w-1.5 rounded-full bg-slate-700"></div>
-                  <span
-                    class="text-[10px] font-bold uppercase text-slate-600 tracking-widest"
-                  >
-                    Completed
-                  </span>
-                </div>
-              </div>
-            </TransitionGroup>
-            <div
-              v-if="history.length === 0"
-              class="text-center py-10 opacity-20 italic"
-            >
-              No recent history
+                {{
+                  stationTickets[station.code] &&
+                  stationTickets[station.code] !== "---"
+                    ? "Now Serving"
+                    : "Available"
+                }}
+              </span>
             </div>
           </div>
         </div>
-      </aside>
+      </div>
+
+      <!-- FOOTER INSTRUCTION -->
+      <div class="z-10 w-full max-w-sm sm:max-w-lg mx-auto mt-3 shrink-0">
+        <div
+          class="py-2.5 sm:py-3 px-4 sm:px-6 bg-white/90 border border-emerald-900/10 rounded-full text-center backdrop-blur-sm shadow-sm"
+        >
+          <p
+            class="text-xs sm:text-sm text-slate-600 font-semibold tracking-wide"
+          >
+            Please proceed to your assigned
+            <span class="text-emerald-800 font-extrabold">Station</span> when
+            called.
+          </p>
+        </div>
+      </div>
     </main>
 
-    <!-- FOOTER TICKER -->
+    <!-- TICKER FOOTER -->
     <footer
-      class="bg-yellow-500 py-4 border-t border-black/20 overflow-hidden whitespace-nowrap z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.4)]"
+      class="bg-emerald-900 text-emerald-100 py-2 sm:py-2.5 border-t border-emerald-950 overflow-hidden whitespace-nowrap z-20 shrink-0 shadow-inner"
     >
       <div
-        class="inline-block animate-marquee text-[#061a0c] font-black uppercase tracking-tighter text-xl italic"
+        class="inline-block animate-marquee font-bold uppercase tracking-widest text-[10px] sm:text-xs"
       >
-        Welcome to CSU Management Information System (MIS) • Please have your
-        RFID or Student ID ready • Stay alert for your number announcement •
-        Follow University health protocols at all times •
+        Welcome to CSU Management Information System • Claim Student ID •
+        Reprinting ID • Institutional Email Concern • Watch screen for your
+        ticket call •
       </div>
     </footer>
 
-    <!-- INTERACTION OVERLAY -->
+    <!-- AUDIO UNLOCK OVERLAY -->
     <Transition name="fade">
       <div
         v-if="!audioUnlocked"
         @click="unlockAudio"
-        class="fixed inset-0 z-[100] bg-[#061a0c]/98 flex items-center justify-center cursor-pointer backdrop-blur-3xl"
+        class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+        role="button"
+        tabindex="0"
+        aria-label="Tap to initialize display"
+        @keydown.enter="unlockAudio"
+        @keydown.space.prevent="unlockAudio"
       >
-        <div class="text-center">
-          <div class="mb-10 relative inline-block">
-            <div
-              class="absolute inset-0 bg-yellow-500 blur-3xl opacity-20 animate-pulse"
-            ></div>
+        <div
+          class="text-center p-6 sm:p-8 max-w-xs sm:max-w-sm bg-white border border-slate-200 rounded-3xl shadow-2xl space-y-4"
+        >
+          <div
+            class="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto text-emerald-700"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-32 w-32 text-yellow-500 mx-auto relative z-10"
+              class="h-6 w-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -230,19 +256,26 @@
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="1"
+                stroke-width="2"
                 d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
               />
             </svg>
           </div>
-          <h2 class="text-6xl font-black text-white tracking-tighter mb-4">
-            CSU QUEUE MONITOR
-          </h2>
-          <p
-            class="text-yellow-500/60 font-bold tracking-[0.5em] uppercase animate-pulse"
+          <div>
+            <h2
+              class="text-base sm:text-lg font-black text-emerald-950 tracking-tight"
+            >
+              CSU MIS DISPLAY
+            </h2>
+            <p class="text-slate-500 text-xs mt-1 font-medium">
+              Tap anywhere to activate audio notifications.
+            </p>
+          </div>
+          <div
+            class="inline-block bg-emerald-900 hover:bg-emerald-800 text-white font-bold uppercase text-[10px] tracking-widest px-5 py-2.5 rounded-xl transition shadow-sm"
           >
-            Click anywhere to start
-          </p>
+            Launch Display
+          </div>
         </div>
       </div>
     </Transition>
@@ -250,23 +283,33 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
-// Disable default layout (AppHeader and AppSidebar) for this page
-definePageMeta({
-  layout: false,
+definePageMeta({ layout: false });
+
+/* STATE MANAGEMENT */
+const stationList = ref([]);
+const stationTickets = ref({});
+const isLoadingStations = ref(true);
+const activeStation = ref(null);
+
+const sortedStationList = computed(() => {
+  return [...stationList.value].sort((a, b) => {
+    const valA = parseInt(String(a.code || a.id).replace(/\D/g, ""), 10) || 0;
+    const valB = parseInt(String(b.code || b.id).replace(/\D/g, ""), 10) || 0;
+    return valA - valB;
+  });
 });
 
-let eventSource = null;
-const current = ref("---");
-const next = ref("---");
-const history = ref([]);
 const currentTime = ref("");
 const isNew = ref(false);
 const audioUnlocked = ref(false);
-const recalling = ref(false);
-const recalledTicket = ref(null);
 
+let clockInterval = null;
+let isNewTimeout = null;
+let eventSource = null;
+
+/* LOGIC & METHODS */
 const updateClock = () => {
   const now = new Date();
   currentTime.value = now.toLocaleTimeString([], {
@@ -277,158 +320,193 @@ const updateClock = () => {
   });
 };
 
-const announceTicket = (number, callback = null) => {
-  if (!number || number === "---" || !window.speechSynthesis) return;
+const fetchStations = async () => {
+  isLoadingStations.value = true;
+  try {
+    const res = await $fetch("/api/stations");
+    const data = Array.isArray(res) ? res : res?.stations || [];
+    stationList.value = data;
+
+    const initialTicketMap = {};
+    data.forEach((station) => {
+      if (station.code) initialTicketMap[station.code] = "---";
+    });
+    stationTickets.value = initialTicketMap;
+  } catch (err) {
+    console.error("Failed to fetch stations:", err);
+  } finally {
+    isLoadingStations.value = false;
+  }
+};
+
+const announceTicket = (number, stationCode) => {
+  if (
+    !number ||
+    number === "---" ||
+    typeof window === "undefined" ||
+    !window.speechSynthesis
+  )
+    return;
 
   window.speechSynthesis.cancel();
-
+  const stationText = stationCode
+    ? `proceed to station ${stationCode}`
+    : "proceed to the station";
   const msg = new SpeechSynthesisUtterance(
-    `Now serving ticket number ${number}, Please proceed to the M I S station.`,
+    `Ticket number ${number}, please ${stationText}.`,
   );
-
   msg.rate = 0.85;
-  msg.pitch = 1.1;
-
-  msg.onend = () => {
-    if (callback) callback();
-  };
-
+  msg.pitch = 1.0;
   window.speechSynthesis.speak(msg);
 };
 
-const fetchQueue = async () => {
-  if (recalledTicket.value) return;
-
-  const res = await $fetch("/api/queue/display");
-
-  current.value = res.current || "---";
-  next.value = res.next || "---";
-  history.value = res.history || [];
-};
-
 const unlockAudio = () => {
-  window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+  }
   audioUnlocked.value = true;
-  if (current.value !== "---") announceTicket(current.value);
 };
 
+const fetchQueue = async () => {
+  try {
+    const res = await $fetch("/api/queue/display");
+    if (res && res.stations) {
+      stationTickets.value = { ...stationTickets.value, ...res.stations };
+    }
+  } catch (err) {
+    console.error("Failed to sync initial queue:", err);
+  }
+};
+
+/* LIFECYCLE */
 onMounted(async () => {
   updateClock();
+  clockInterval = setInterval(updateClock, 1000);
 
-  setInterval(updateClock, 1000);
-
+  await fetchStations();
   await fetchQueue();
 
-  eventSource = new EventSource("/api/queue/events");
+  if (typeof window !== "undefined") {
+    eventSource = new EventSource("/api/queue/events");
 
-  eventSource.onmessage = async (event) => {
-    const data = JSON.parse(event.data);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.heartbeat) return;
 
-    if (data.heartbeat) return;
+        if (
+          data.type === "serving" ||
+          data.type === "recall" ||
+          data.type === "transfer"
+        ) {
+          const targetStationCode = data.station;
 
-    if (data.type === "recall") {
-      recalling.value = true;
-      recalledTicket.value = data.ticket;
+          Object.keys(stationTickets.value).forEach((code) => {
+            if (stationTickets.value[code] === data.ticket) {
+              stationTickets.value[code] = "---";
+            }
+          });
 
-      current.value = data.ticket;
+          stationTickets.value[targetStationCode] = data.ticket;
+          activeStation.value = targetStationCode;
 
-      if (audioUnlocked.value) {
-        announceTicket(data.ticket);
+          if (audioUnlocked.value)
+            announceTicket(data.ticket, targetStationCode);
+
+          if (data.type === "serving" || data.type === "transfer") {
+            isNew.value = true;
+            if (isNewTimeout) clearTimeout(isNewTimeout);
+            isNewTimeout = setTimeout(() => {
+              isNew.value = false;
+            }, 3000);
+          }
+        }
+      } catch (e) {
+        console.error("SSE parsing error:", e);
       }
-
-      return;
-    }
-
-    if (data.type === "serving") {
-      recalling.value = false;
-      recalledTicket.value = null;
-
-      await fetchQueue();
-
-      if (audioUnlocked.value) {
-        announceTicket(data.ticket);
-      }
-
-      isNew.value = true;
-      setTimeout(() => {
-        isNew.value = false;
-      }, 3000);
-
-      return;
-    }
-
-    await fetchQueue();
-  };
-
-  eventSource.onerror = () => {
-    console.log("SSE disconnected");
-  };
-
-  window.speechSynthesis.getVoices();
+    };
+  }
 });
 
 onBeforeUnmount(() => {
-  eventSource?.close();
+  if (clockInterval) clearInterval(clockInterval);
+  if (isNewTimeout) clearTimeout(isNewTimeout);
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
 });
 </script>
 
 <style scoped>
-/* PREMIUM ANIMATIONS */
+/* AUTO-FIT RESPONSIVE CARD STYLING */
+.auto-fit-card {
+  flex: 1 1 calc(220px + 2vw);
+  max-width: clamp(240px, 28vw, 380px);
+  min-height: clamp(160px, 22vh, 260px);
+}
+
+.text-ticket {
+  font-size: clamp(2.5rem, 5.5vh + 1.5vw, 5rem);
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 35s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
 .scale-enter-active,
 .scale-leave-active {
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .scale-enter-from {
   opacity: 0;
-  transform: scale(0.5);
+  transform: scale(0.85);
 }
+
 .scale-leave-to {
   opacity: 0;
-  transform: scale(1.2);
-  filter: blur(20px);
-}
-
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: all 0.5s ease;
-}
-.slide-up-enter-from {
-  opacity: 0;
-  transform: translateY(30px);
-}
-.slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(-30px);
-}
-
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.4s ease;
-}
-.list-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
+  transform: scale(1.05);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.3s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+/* CUSTOM SCROLLBAR FOR LIGHT THEME */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
 }
-.animate-marquee {
-  display: inline-block;
-  animation: marquee 35s linear infinite;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(6, 78, 59, 0.15);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 78, 59, 0.3);
 }
 </style>

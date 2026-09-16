@@ -3,7 +3,7 @@ import { pool } from "../../utils/db";
 export default defineEventHandler(async () => {
   try {
     const result = await pool.query(
-      `SELECT id, name, description, created_by, created_at, updated_at 
+      `SELECT id, code, name, description, created_by, created_at, updated_at 
        FROM stations 
        ORDER BY id DESC`,
     );

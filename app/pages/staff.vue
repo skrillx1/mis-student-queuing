@@ -153,24 +153,24 @@
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
       <div
-        v-for="stationNum in stations"
-        :key="stationNum"
-        :draggable="!!getStationTicket(stationNum)"
+        v-for="station in sortedStations"
+        :key="station.code"
+        :draggable="!!getStationTicket(station.code)"
         @dragstart="
-          getStationTicket(stationNum) &&
-          onDragStart($event, getStationTicket(stationNum))
+          getStationTicket(station.code) &&
+          onDragStart($event, getStationTicket(station.code))
         "
-        @dragover.prevent="onDragOver($event, stationNum)"
-        @dragleave="onDragLeave(stationNum)"
-        @drop="onDrop($event, stationNum)"
+        @dragover.prevent="onDragOver($event, station.code)"
+        @dragleave="onDragLeave(station.code)"
+        @drop="onDrop($event, station.code)"
         :class="[
           'p-3.5 rounded-2xl border-2 transition-all flex flex-col justify-between min-h-[140px]',
-          getStationTicket(stationNum)
+          getStationTicket(station.code)
             ? 'cursor-grab active:cursor-grabbing'
             : '',
-          activeStationHover === stationNum
+          activeStationHover === station.code
             ? 'border-dashed border-emerald-500 bg-emerald-100/70 scale-[1.02]'
-            : getStationTicket(stationNum)
+            : getStationTicket(station.code)
               ? 'border-solid border-emerald-600/40 bg-emerald-50/50 shadow-xs'
               : 'border-dashed border-slate-200 bg-slate-50/60',
         ]"
@@ -179,22 +179,22 @@
           <span
             class="text-xs font-black uppercase text-slate-500 tracking-wider"
           >
-            Station {{ stationNum }}
+            {{ station.name || `Station ${station.code}` }}
           </span>
           <span
-            v-if="getStationTicket(stationNum)"
+            v-if="getStationTicket(station.code)"
             class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"
           ></span>
         </div>
 
-        <div v-if="getStationTicket(stationNum)" class="my-1">
+        <div v-if="getStationTicket(station.code)" class="my-1">
           <div class="font-mono font-black text-2xl text-emerald-950">
-            {{ getStationTicket(stationNum).ticketnumber }}
+            {{ getStationTicket(station.code).ticketnumber }}
           </div>
           <div
             class="text-[11px] font-bold text-slate-700 truncate max-w-[130px]"
           >
-            {{ getStationTicket(stationNum).fullname || "No Name Provided" }}
+            {{ getStationTicket(station.code).fullname || "No Name Provided" }}
           </div>
         </div>
 
@@ -204,12 +204,14 @@
 
         <!-- STATION ACTIONS (ONLY RENDER IF A TICKET IS CURRENTLY SERVING) -->
         <div
-          v-if="getStationTicket(stationNum)"
+          v-if="getStationTicket(station.code)"
           class="pt-2 border-t border-emerald-200/60 grid grid-cols-3 gap-1"
         >
           <!-- RECALL BUTTON -->
           <button
-            @click="recallTicket(getStationTicket(stationNum).id, stationNum)"
+            @click="
+              recallTicket(getStationTicket(station.code).id, station.code)
+            "
             type="button"
             title="Re-announce ticket"
             class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200/80 hover:bg-sky-600 hover:text-white hover:border-sky-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
@@ -232,7 +234,7 @@
 
           <!-- HOLD BUTTON -->
           <button
-            @click="holdTicket(getStationTicket(stationNum).id)"
+            @click="holdTicket(getStationTicket(station.code).id)"
             type="button"
             title="Put ticket on hold"
             class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 hover:bg-amber-600 hover:text-white hover:border-amber-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
@@ -255,7 +257,7 @@
 
           <!-- DONE BUTTON -->
           <button
-            @click="markDone(getStationTicket(stationNum).id)"
+            @click="markDone(getStationTicket(station.code).id)"
             type="button"
             title="Complete ticket session"
             class="inline-flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300/80 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
@@ -566,6 +568,7 @@ import {
   watch,
 } from "vue";
 
+// ================ AUTHENTICATION CHECK =================
 const { status } = useAuth();
 
 definePageMeta({
@@ -581,11 +584,21 @@ definePageMeta({
   ],
 });
 
-/* ================= STATE ================= */
+/* ================= STATE & SERVER DATA ================= */
 const queues = ref([]);
 const idPictureMap = reactive({});
-const stations = [1, 2, 3, 4, 5];
 const activeStationHover = ref(null);
+
+// Fetch stations dynamic array using server endpoint
+const { data: stations } = await useAsyncData("stations", () =>
+  $fetch("/api/stations"),
+);
+
+// Sort stations numerically by code (1, 2, 3...)
+const sortedStations = computed(() => {
+  if (!stations.value || !Array.isArray(stations.value)) return [];
+  return [...stations.value].sort((a, b) => Number(a.code) - Number(b.code));
+});
 
 // Notification and audio settings
 const isMuted = ref(false);
@@ -641,7 +654,6 @@ const playChimeSound = () => {
     if (!AudioContext) return;
     const ctx = new AudioContext();
 
-    // Two-tone chime alert
     const playNote = (freq, startTime, duration) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -665,7 +677,7 @@ const playChimeSound = () => {
     playNote(587.33, 0, 0.25); // D5
     playNote(880, 0.15, 0.4); // A5
   } catch {
-    // Graceful fallback if web audio API is restricted by user gesture requirements
+    // Graceful fallback
   }
 };
 
@@ -677,10 +689,8 @@ const requestNotificationPermission = async () => {
 };
 
 const triggerNewQueueNotification = (ticket) => {
-  // 1. Audio Ping
   playChimeSound();
 
-  // 2. On-screen Toast
   toast.ticketnumber = ticket.ticketnumber;
   toast.fullname = ticket.fullname || "New Client";
   toast.servicetype = ticket.servicetype || "General Service";
@@ -691,7 +701,6 @@ const triggerNewQueueNotification = (ticket) => {
     toast.show = false;
   }, 5000);
 
-  // 3. Browser Desktop Notification (if granted)
   if (
     notificationsSupported.value &&
     notificationPermission.value === "granted"
@@ -708,9 +717,11 @@ const isIdProcessing = (serviceType) => {
   return serviceType?.toLowerCase().includes("id processing");
 };
 
-// Gets the active ticket matching a specific station number
-const getStationTicket = (stationNum) => {
-  return servingQueues.value.find((q) => Number(q.station) === stationNum);
+// Returns ticket assigned to station.code
+const getStationTicket = (stationCode) => {
+  return servingQueues.value.find(
+    (q) => String(q.station) === String(stationCode),
+  );
 };
 
 /* ================= DRAG & DROP HANDLERS ================= */
@@ -719,48 +730,48 @@ const onDragStart = (event, ticket) => {
   event.dataTransfer.effectAllowed = "move";
 };
 
-const onDragOver = (event, stationNum) => {
-  activeStationHover.value = stationNum;
+const onDragOver = (event, stationCode) => {
+  activeStationHover.value = stationCode;
 };
 
-const onDragLeave = (stationNum) => {
-  if (activeStationHover.value === stationNum) {
+const onDragLeave = (stationCode) => {
+  if (activeStationHover.value === stationCode) {
     activeStationHover.value = null;
   }
 };
 
-const onDrop = async (event, stationNum) => {
+const onDrop = async (event, stationCode) => {
   activeStationHover.value = null;
   const rawData = event.dataTransfer.getData("text/plain");
   if (!rawData) return;
 
   const ticket = JSON.parse(rawData);
 
-  // Avoid unnecessary API calls if dropped on the exact same station
-  if (ticket.status === "serving" && Number(ticket.station) === stationNum) {
+  if (
+    ticket.status === "serving" &&
+    String(ticket.station) === String(stationCode)
+  ) {
     return;
   }
 
-  const existingTicket = getStationTicket(stationNum);
+  const existingTicket = getStationTicket(stationCode);
 
-  // Scenario A: The target station already has a serving ticket
   if (existingTicket) {
     if (ticket.status === "serving" && ticket.station) {
       await Promise.all([
-        assignStation(ticket.id, stationNum),
-        assignStation(existingTicket.id, Number(ticket.station)),
+        assignStation(ticket.id, stationCode),
+        assignStation(existingTicket.id, ticket.station),
       ]);
       return;
     }
 
     alert(
-      `Station ${stationNum} is currently serving ticket #${existingTicket.ticketnumber}. Clear or complete it first.`,
+      `Station ${stationCode} is currently serving ticket #${existingTicket.ticketnumber}. Clear or complete it first.`,
     );
     return;
   }
 
-  // Scenario B: Drop onto an empty target station
-  await assignStation(ticket.id, stationNum);
+  await assignStation(ticket.id, stationCode);
 };
 
 /* ================= POLLING LOGIC ================= */
@@ -817,33 +828,30 @@ const fetchQueues = async () => {
 
   const incomingQueues = res || [];
 
-  // Detect newly added tickets in the waiting list
   if (!isInitialLoad.value) {
     const freshWaiting = incomingQueues.filter(
       (q) => q.status === "waiting" && !previousQueueIds.value.has(q.id),
     );
 
     if (freshWaiting.length > 0) {
-      // Alert staff about the newest incoming ticket
       triggerNewQueueNotification(freshWaiting[freshWaiting.length - 1]);
     }
   }
 
-  // Update set of existing queue IDs
   previousQueueIds.value = new Set(incomingQueues.map((q) => q.id));
   isInitialLoad.value = false;
 
   queues.value = incomingQueues;
 };
 
-const assignStation = async (ticketId, stationNum) => {
-  if (!ticketId || !stationNum) return;
+const assignStation = async (ticketId, stationCode) => {
+  if (!ticketId || !stationCode) return;
 
   await $fetch("/api/staff/call", {
     method: "POST",
     body: {
       id: ticketId,
-      station: stationNum,
+      station: stationCode,
       status: "serving",
     },
   });
@@ -851,14 +859,14 @@ const assignStation = async (ticketId, stationNum) => {
   await fetchQueues();
 };
 
-const recallTicket = async (ticketId, stationNum) => {
-  if (!ticketId || !stationNum) return;
+const recallTicket = async (ticketId, stationCode) => {
+  if (!ticketId || !stationCode) return;
 
   await $fetch("/api/staff/call", {
     method: "POST",
     body: {
       id: ticketId,
-      station: stationNum,
+      station: stationCode,
       status: "serving",
     },
   });
@@ -922,7 +930,6 @@ const rejectTicket = async (id) => {
 
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
-  // Check notification support
   if (typeof window !== "undefined" && "Notification" in window) {
     notificationsSupported.value = true;
     notificationPermission.value = Notification.permission;

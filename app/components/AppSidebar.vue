@@ -137,7 +137,10 @@ const handleSignOut = async () => {
 
     <!-- User Profile & Sign Out Footer -->
     <div class="pt-4 border-t border-slate-100 space-y-3 shrink-0">
-      <div class="flex items-center gap-3">
+      <NuxtLink
+        to="/profile"
+        class="flex items-center gap-3 rounded-xl p-2 -mx-2 hover:bg-slate-50 transition-colors"
+      >
         <!-- Dynamic Avatar Image or Initials -->
         <img
           v-if="user?.image"
@@ -160,7 +163,7 @@ const handleSignOut = async () => {
             {{ user?.email || "No email available" }}
           </p>
         </div>
-      </div>
+      </NuxtLink>
 
       <button
         type="button"

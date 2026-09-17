@@ -321,70 +321,66 @@
       </div>
 
       <div v-else class="space-y-3">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-          <p class="text-xs uppercase font-bold tracking-wider text-amber-800">
-            Waiting List ({{ waitingQueues.length }})
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-2 border-b border-slate-100"
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <p class="text-sm font-bold text-slate-800">Waiting list</p>
+          </div>
+          <p class="text-xs font-medium text-slate-400">
+            {{ waitingQueues.length }}
+            {{ waitingQueues.length === 1 ? "ticket" : "tickets" }} awaiting
+            assignment
           </p>
         </div>
 
-        <div
-          v-for="q in waitingQueues"
-          :key="q.id"
-          draggable="true"
-          @dragstart="onDragStart($event, q)"
-          class="group flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-xl border-l-4 border-l-amber-500 border border-slate-200/80 bg-white hover:border-amber-400 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing"
-        >
-          <div class="flex items-center gap-4 flex-1">
-            <div
-              class="flex flex-col items-center justify-center bg-amber-50 text-amber-900 border border-amber-200/60 font-mono font-bold text-xl tracking-wider px-3.5 py-1.5 rounded-xl min-w-[90px] text-center"
-            >
-              {{ q.ticketnumber }}
-            </div>
-            <div>
-              <h3 class="font-bold text-slate-800 text-sm sm:text-base">
-                {{ q.fullname || "No Name" }}
-              </h3>
-              <p class="text-xs font-medium text-slate-500 mt-0.5">
-                {{ q.servicetype }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Filename Input for ID Processing -->
+        <div class="divide-y divide-slate-100">
           <div
-            v-if="isIdProcessing(q.servicetype)"
-            class="flex flex-col gap-1 w-full sm:w-auto"
+            v-for="q in waitingQueues"
+            :key="q.id"
+            draggable="true"
+            @dragstart="onDragStart($event, q)"
+            class="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 first:pt-2 last:pb-2 cursor-grab active:cursor-grabbing hover:bg-slate-50/70 transition-colors"
           >
-            <input
-              v-model="idPictureMap[q.id]"
-              type="text"
-              placeholder="ID Picture Filename..."
-              class="h-9 text-xs px-3 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
-            />
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center gap-2 justify-end">
-            <button
-              @click="rejectTicket(q.id)"
-              class="h-9 px-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-lg font-medium text-xs transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <svg
-                class="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                class="flex items-center justify-center bg-amber-50 text-amber-900 border border-amber-200/70 font-mono font-bold text-base tracking-wide px-3 py-2 rounded-lg min-w-[76px]"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              Reject / Cancel
-            </button>
+                {{ q.ticketnumber }}
+              </div>
+              <div class="min-w-0">
+                <h3 class="font-semibold text-slate-800 text-sm truncate">
+                  {{ q.fullname || "No Name" }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5 truncate">
+                  {{ q.servicetype }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Filename Input for ID Processing -->
+            <div
+              v-if="isIdProcessing(q.servicetype)"
+              class="flex flex-col gap-1 w-full sm:w-auto"
+            >
+              <input
+                v-model="idPictureMap[q.id]"
+                type="text"
+                placeholder="ID picture filename"
+                class="h-9 text-xs px-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
+              />
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 justify-end">
+              <button
+                @click="rejectTicket(q.id)"
+                class="h-8 px-3 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </div>

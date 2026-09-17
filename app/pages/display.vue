@@ -140,7 +140,7 @@
             >
               <div class="min-w-0">
                 <p
-                  class="text-[10px] sm:text-xs font-black uppercase tracking-[0.16em]"
+                  class="text-[10px] lg:text-xl font-black uppercase tracking-[0.16em]"
                   :class="
                     activeStation === station.code
                       ? 'text-amber-800'
@@ -150,7 +150,7 @@
                   STATION {{ station.code }}
                 </p>
                 <p
-                  class="mt-1 text-xs sm:text-sm font-semibold text-slate-700 truncate"
+                  class="mt-1 text-xs sm:text-lg font-semibold text-slate-700 truncate"
                   :title="station.name || `Station ${station.code}`"
                 >
                   {{ station.name || `Station ${station.code}` }}

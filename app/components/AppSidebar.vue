@@ -110,6 +110,29 @@ const handleSignOut = async () => {
             Station Management
           </NuxtLink>
 
+          <!-- User Management Link (Admin Only) -->
+          <NuxtLink
+            v-if="isAdmin"
+            to="/users"
+            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
+            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+            User Management
+          </NuxtLink>
+
           <!-- Generate Report Link -->
           <NuxtLink
             to="/reports"

@@ -127,30 +127,38 @@
           <div
             v-for="station in sortedStationList"
             :key="station.code || station.id"
-            class="auto-fit-card relative flex flex-col justify-between p-4 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 backdrop-blur-md shadow-sm hover:shadow-md"
+            class="auto-fit-card relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-sm hover:-translate-y-0.5 hover:shadow-lg"
             :class="[
               activeStation === station.code
-                ? 'bg-amber-500/10 border-amber-400/90 shadow-[0_0_25px_rgba(245,158,11,0.2)] scale-[1.02] ring-2 ring-amber-400/40'
-                : 'bg-white/90 border-slate-200/80 hover:border-emerald-300',
+                ? 'bg-amber-50 border-amber-400 shadow-[0_8px_24px_rgba(245,158,11,0.16)] scale-[1.02] ring-2 ring-amber-400/30'
+                : 'bg-white border-slate-200 hover:border-emerald-300',
             ]"
           >
             <!-- CARD HEADER -->
             <div
-              class="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0"
+              class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 shrink-0"
             >
-              <span
-                class="text-[11px] sm:text-xs md:text-sm font-extrabold uppercase tracking-wider truncate mr-2"
-                :class="
-                  activeStation === station.code
-                    ? 'text-amber-800'
-                    : 'text-emerald-900'
-                "
-              >
-                {{ station.name || `Station ${station.code}` }}
-              </span>
+              <div class="min-w-0">
+                <p
+                  class="text-[10px] sm:text-xs font-black uppercase tracking-[0.16em]"
+                  :class="
+                    activeStation === station.code
+                      ? 'text-amber-800'
+                      : 'text-emerald-800'
+                  "
+                >
+                  STATION {{ station.code }}
+                </p>
+                <p
+                  class="mt-1 text-xs sm:text-sm font-semibold text-slate-700 truncate"
+                  :title="station.name || `Station ${station.code}`"
+                >
+                  {{ station.name || `Station ${station.code}` }}
+                </p>
+              </div>
               <span
                 v-if="activeStation === station.code && isNew"
-                class="bg-amber-400 text-emerald-950 text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse shrink-0"
+                class="bg-amber-400 text-emerald-950 text-[8px] sm:text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider animate-pulse shrink-0"
               >
                 Called
               </span>

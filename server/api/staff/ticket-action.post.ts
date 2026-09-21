@@ -11,7 +11,7 @@ const getUserId = (event) => {
 export default defineEventHandler(async (event) => {
   const userId = getUserId(event);
   const { ticketId, status } = await readBody(event);
-  if (!userId || !ticketId || !["done", "onhold"].includes(status)) {
+  if (!userId || !ticketId || !["done", "onhold", "serving"].includes(status)) {
     throw createError({
       statusCode: 400,
       statusMessage: "Invalid ticket action.",
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
      SET status = $1
      FROM stations AS s
      WHERE q.id = $2 AND q.station = s.code AND s.created_by = $3
-       AND q.status IN ('serving', 'onhold')
+      AND q.status IN ('serving', 'onhold')
      RETURNING q.id, q.ticketnumber, q.station, q.status`,
     [status, ticketId, userId],
   );
@@ -36,7 +36,8 @@ export default defineEventHandler(async (event) => {
 
   const updated = result.rows[0];
   broadcastQueueUpdate({
-    type: status === "done" ? "done" : "hold",
+    type:
+      status === "done" ? "done" : status === "serving" ? "serving" : "hold",
     ticket: updated.ticketnumber,
     station: updated.station,
     status: updated.status,

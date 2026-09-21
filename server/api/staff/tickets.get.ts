@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     `SELECT id, ticketnumber, fullname, servicetype, status, station
      FROM queue_tickets
      WHERE station = $1 AND status IN ('serving', 'onhold')
-     ORDER BY CASE WHEN status = 'serving' THEN 1 ELSE 2 END, id ASC`,
+    ORDER BY CASE WHEN status = 'onhold' THEN 1 ELSE 2 END, id DESC`,
     [station.code],
   );
   return { station, tickets: ticketResult.rows };

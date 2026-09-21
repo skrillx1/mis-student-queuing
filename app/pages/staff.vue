@@ -47,9 +47,10 @@
         class="px-5 py-4 border-b border-slate-100 flex items-center justify-between"
       >
         <h2 class="font-bold text-slate-900">Assigned tickets</h2>
-        <span class="text-xs text-slate-400"
-          >{{ staffTickets.length }} active</span
-        >
+        <div class="flex items-center gap-3 text-xs text-slate-400">
+          <span>{{ staffServingTickets.length }} serving</span>
+          <span>{{ staffOnHoldTickets.length }} on hold</span>
+        </div>
       </div>
       <div v-if="staffLoading" class="p-10 text-center text-sm text-slate-400">
         Loading station tickets...
@@ -66,50 +67,100 @@
           Tickets assigned to {{ staffStation.name }} will appear here.
         </p>
       </div>
-      <div v-else class="divide-y divide-slate-100">
-        <article
-          v-for="ticket in staffTickets"
-          :key="ticket.id"
-          class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      <div v-else class="flex flex-col">
+        <div
+          v-if="staffOnHoldTickets.length"
+          class="order-2 border-b border-slate-100"
         >
-          <div class="flex items-center gap-4 min-w-0">
-            <div
-              class="min-w-[92px] px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-center font-mono font-black text-xl text-emerald-900"
+          <div class="px-5 py-3 bg-amber-50/60">
+            <h3
+              class="text-xs font-bold uppercase tracking-wider text-amber-800"
             >
-              {{ ticket.ticketnumber }}
-            </div>
-            <div class="min-w-0">
-              <h3 class="font-bold text-slate-800 truncate">
-                {{ ticket.fullname || "No Name Provided" }}
-              </h3>
-              <p class="text-xs text-slate-500 mt-1 truncate">
-                {{ ticket.servicetype }}
-              </p>
-              <span
-                class="inline-flex mt-2 px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600"
-                >{{ ticket.status }}</span
-              >
-            </div>
+              On-hold tickets assigned to you
+            </h3>
           </div>
-          <div class="flex items-center gap-2 sm:shrink-0">
+          <article
+            v-for="ticket in staffOnHoldTickets"
+            :key="ticket.id"
+            class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div class="flex items-center gap-4 min-w-0">
+              <div
+                class="min-w-[92px] px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-center font-mono font-black text-xl text-amber-900"
+              >
+                {{ ticket.ticketnumber }}
+              </div>
+              <div class="min-w-0">
+                <h3 class="font-bold text-slate-800 truncate">
+                  {{ ticket.fullname || "No Name Provided" }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-1 truncate">
+                  {{ ticket.servicetype }}
+                </p>
+              </div>
+            </div>
             <button
               type="button"
-              @click="updateStaffTicket(ticket, 'onhold')"
-              :disabled="staffUpdating === ticket.id"
-              class="px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
-            >
-              On hold
-            </button>
-            <button
-              type="button"
-              @click="updateStaffTicket(ticket, 'done')"
+              @click="updateStaffTicket(ticket, 'serving')"
               :disabled="staffUpdating === ticket.id"
               class="px-4 py-2 rounded-xl bg-[#003300] text-white text-xs font-semibold hover:bg-emerald-900 disabled:opacity-50"
             >
-              Mark done
+              Serve ticket
             </button>
+          </article>
+        </div>
+
+        <div
+          v-if="staffServingTickets.length"
+          class="order-1 divide-y divide-slate-100"
+        >
+          <div class="px-5 py-3 bg-emerald-50/60">
+            <h3
+              class="text-xs font-bold uppercase tracking-wider text-emerald-800"
+            >
+              Serving tickets
+            </h3>
           </div>
-        </article>
+          <article
+            v-for="ticket in staffServingTickets"
+            :key="ticket.id"
+            class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div class="flex items-center gap-4 min-w-0">
+              <div
+                class="min-w-[92px] px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-center font-mono font-black text-xl text-emerald-900"
+              >
+                {{ ticket.ticketnumber }}
+              </div>
+              <div class="min-w-0">
+                <h3 class="font-bold text-slate-800 truncate">
+                  {{ ticket.fullname || "No Name Provided" }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-1 truncate">
+                  {{ ticket.servicetype }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 sm:shrink-0">
+              <button
+                type="button"
+                @click="updateStaffTicket(ticket, 'onhold')"
+                :disabled="staffUpdating === ticket.id"
+                class="px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
+              >
+                On hold
+              </button>
+              <button
+                type="button"
+                @click="updateStaffTicket(ticket, 'done')"
+                :disabled="staffUpdating === ticket.id"
+                class="px-4 py-2 rounded-xl bg-[#003300] text-white text-xs font-semibold hover:bg-emerald-900 disabled:opacity-50"
+              >
+                Mark done
+              </button>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
   </div>
@@ -613,6 +664,16 @@ const staffUpdating = ref(null);
 const staffError = ref("");
 const staffSuccess = ref("");
 
+const staffServingTickets = computed(() =>
+  staffTickets.value.filter((ticket) => ticket.status === "serving"),
+);
+
+const staffOnHoldTickets = computed(() =>
+  staffTickets.value
+    .filter((ticket) => ticket.status === "onhold")
+    .sort((a, b) => Number(b.id) - Number(a.id)),
+);
+
 const fetchStaffTickets = async () => {
   staffLoading.value = true;
   staffError.value = "";
@@ -647,7 +708,9 @@ const updateStaffTicket = async (ticket, nextStatus) => {
     staffSuccess.value =
       nextStatus === "done"
         ? `Ticket ${ticket.ticketnumber} was marked done.`
-        : `Ticket ${ticket.ticketnumber} was placed on hold.`;
+        : nextStatus === "serving"
+          ? `Ticket ${ticket.ticketnumber} is now serving.`
+          : `Ticket ${ticket.ticketnumber} was placed on hold.`;
     await fetchStaffTickets();
   } catch (error) {
     staffError.value =
@@ -657,13 +720,26 @@ const updateStaffTicket = async (ticket, nextStatus) => {
   }
 };
 
-let staffRefreshTimer = null;
+let staffEventSource = null;
 onMounted(async () => {
   await fetchStaffTickets();
-  staffRefreshTimer = setInterval(fetchStaffTickets, 5000);
+  if (typeof window !== "undefined") {
+    staffEventSource = new EventSource("/api/queue/events");
+    staffEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (!data.heartbeat && !data.connected) fetchStaffTickets();
+      } catch (error) {
+        console.error("Failed to process queue update:", error);
+      }
+    };
+  }
 });
 onBeforeUnmount(() => {
-  if (staffRefreshTimer) clearInterval(staffRefreshTimer);
+  if (staffEventSource) {
+    staffEventSource.close();
+    staffEventSource = null;
+  }
 });
 
 definePageMeta({
@@ -907,7 +983,7 @@ const stopPolling = () => {
 watch(
   () => filters.date,
   () => {
-    fetchQueues();
+    if (!staffStationView.value) fetchQueues();
   },
 );
 
@@ -1021,6 +1097,8 @@ const rejectTicket = async (id) => {
 
 /* ================= INIT & LIFECYCLE ================= */
 onMounted(async () => {
+  if (staffStationView.value) return;
+
   if (typeof window !== "undefined" && "Notification" in window) {
     notificationsSupported.value = true;
     notificationPermission.value = Notification.permission;

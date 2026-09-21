@@ -548,7 +548,7 @@ const waitingQueues = computed(() =>
 const onHoldQueues = computed(() =>
   queues.value
     .filter((q) => q.status === "onhold")
-    .sort((a, b) => Number(a.ticketnumber) - Number(b.ticketnumber)),
+    .sort((a, b) => Number(b.id) - Number(a.id)),
 );
 
 /* ================= NOTIFICATION & AUDIO HELPER ================= */

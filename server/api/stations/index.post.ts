@@ -2,16 +2,36 @@ import { pool } from "../../utils/db";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { code, name, description, created_by } = body;
+  const { code, description, assigned_user_id } = body;
 
-  if (!code || !name || !created_by) {
+  if (!code || !assigned_user_id) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Station code, name, and created_by are required.",
+      statusMessage: "Station code and assigned user are required.",
     });
   }
 
   try {
+    const assignedUser = await pool.query(
+      "SELECT id, full_name FROM users WHERE id = $1 AND is_active = TRUE",
+      [assigned_user_id],
+    );
+    if (assignedUser.rowCount === 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Assigned user was not found or is inactive.",
+      });
+    }
+
+    const fullName = assignedUser.rows[0].full_name?.trim() || "";
+    const lastName = fullName.split(/\s+/).at(-1)?.toUpperCase();
+    if (!lastName) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Assigned user must have a full name.",
+      });
+    }
+
     const query = `
       INSERT INTO stations (code, name, description, created_by)
       VALUES ($1, $2, $3, $4)
@@ -19,14 +39,15 @@ export default defineEventHandler(async (event) => {
     `;
     const values = [
       code.trim(),
-      name.trim(),
+      `MR. ${lastName}`,
       description ? description.trim() : null,
-      created_by,
+      assigned_user_id,
     ];
 
     const result = await pool.query(query, values);
     return result.rows[0];
   } catch (error: any) {
+    if (error.statusCode) throw error;
     if (error.code === "23505") {
       throw createError({
         statusCode: 409,

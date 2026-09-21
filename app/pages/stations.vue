@@ -18,6 +18,7 @@ const currentUser = computed(() => authData.value ?? {});
 
 // State
 const stations = ref([]);
+const users = ref([]);
 const isLoading = ref(true);
 const searchQuery = ref("");
 const isSubmitting = ref(false);
@@ -33,6 +34,20 @@ const form = reactive({
   code: "",
   name: "",
   description: "",
+  assignedUserId: "",
+});
+
+const selectedUser = computed(() =>
+  users.value.find((user) => String(user.id) === String(form.assignedUserId)),
+);
+
+const assignedUserLastName = computed(() => {
+  const fullName = selectedUser.value?.name?.trim();
+  return fullName ? fullName.split(/\s+/).at(-1).toUpperCase() : "";
+});
+
+watch(assignedUserLastName, (lastName) => {
+  if (lastName) form.name = `MR. ${lastName}`;
 });
 
 // Fetch Stations
@@ -48,8 +63,22 @@ const fetchStations = async () => {
   }
 };
 
+const fetchUsers = async () => {
+  try {
+    const data = await $fetch("/api/auth/users", {
+      headers: {
+        Authorization: `Bearer session-token-${currentUser.value?.id}`,
+      },
+    });
+    users.value = (data || []).filter((user) => user.is_active !== false);
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+  }
+};
+
 onMounted(() => {
   fetchStations();
+  fetchUsers();
 });
 
 // Filtered Stations (Search includes code, name, and description)
@@ -67,8 +96,9 @@ const filteredStations = computed(() => {
 const openAddModal = () => {
   const nextCode = (stations.value.length + 1).toString();
   form.code = nextCode;
-  form.name = `STATION ${nextCode}`;
+  form.name = "";
   form.description = "";
+  form.assignedUserId = "";
   showAddModal.value = true;
 };
 
@@ -77,6 +107,7 @@ const openEditModal = (station) => {
   form.code = station.code || "";
   form.name = station.name || "";
   form.description = station.description || "";
+  form.assignedUserId = station.created_by || "";
   showEditModal.value = true;
 };
 
@@ -93,11 +124,12 @@ const closeModal = () => {
   form.code = "";
   form.name = "";
   form.description = "";
+  form.assignedUserId = "";
 };
 
 // CRUD Operations
 const handleCreateStation = async () => {
-  if (!form.name.trim()) return;
+  if (!form.name.trim() || !form.assignedUserId) return;
   isSubmitting.value = true;
   try {
     await $fetch("/api/stations", {
@@ -106,7 +138,8 @@ const handleCreateStation = async () => {
         code: form.code,
         name: form.name.trim(),
         description: form.description.trim(),
-        created_by: currentUser.value?.id,
+        created_by: form.assignedUserId,
+        assigned_user_id: form.assignedUserId,
       },
     });
     closeModal();
@@ -119,7 +152,8 @@ const handleCreateStation = async () => {
 };
 
 const handleUpdateStation = async () => {
-  if (!form.name.trim() || !selectedStation.value) return;
+  if (!form.name.trim() || !form.assignedUserId || !selectedStation.value)
+    return;
   isSubmitting.value = true;
   try {
     await $fetch(`/api/stations/${selectedStation.value.id}`, {
@@ -128,6 +162,8 @@ const handleUpdateStation = async () => {
         code: form.code,
         name: form.name.trim(),
         description: form.description.trim(),
+        created_by: form.assignedUserId,
+        assigned_user_id: form.assignedUserId,
       },
     });
     closeModal();
@@ -240,6 +276,7 @@ const formatDate = (dateStr) => {
             >
               <th class="py-3 px-4">Code</th>
               <th class="py-3 px-4">Station Name</th>
+              <th class="py-3 px-4">Assigned User</th>
               <th class="py-3 px-4">Description</th>
               <th class="py-3 px-4">Created Date</th>
               <th class="py-3 px-4 text-right">Actions</th>
@@ -247,12 +284,12 @@ const formatDate = (dateStr) => {
           </thead>
           <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
             <tr v-if="isLoading">
-              <td colspan="5" class="py-8 text-center text-slate-400">
+              <td colspan="6" class="py-8 text-center text-slate-400">
                 Loading stations...
               </td>
             </tr>
             <tr v-else-if="filteredStations.length === 0">
-              <td colspan="5" class="py-8 text-center text-slate-400">
+              <td colspan="6" class="py-8 text-center text-slate-400">
                 No stations found.
               </td>
             </tr>
@@ -267,6 +304,9 @@ const formatDate = (dateStr) => {
               </td>
               <td class="py-3 px-4 font-semibold text-slate-700">
                 {{ station.name }}
+              </td>
+              <td class="py-3 px-4 text-slate-600">
+                {{ station.assigned_user_name || "—" }}
               </td>
               <td class="py-3 px-4 text-slate-500 max-w-xs truncate">
                 {{ station.description || "—" }}
@@ -331,9 +371,32 @@ const formatDate = (dateStr) => {
               v-model="form.name"
               type="text"
               required
-              placeholder="e.g. STATION 1"
+              readonly
+              placeholder="Select a user"
               class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
             />
+          </div>
+
+          <div>
+            <label
+              for="assigned-user"
+              class="block text-xs font-semibold text-slate-700 mb-1"
+              >Assign User</label
+            >
+            <select
+              id="assigned-user"
+              v-model="form.assignedUserId"
+              required
+              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+            >
+              <option value="" disabled>Select a user</option>
+              <option v-for="user in users" :key="user.id" :value="user.id">
+                {{ user.name || user.username }}
+              </option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">
+              Station name: MR. {{ assignedUserLastName || "LASTNAME" }}
+            </p>
           </div>
 
           <div>

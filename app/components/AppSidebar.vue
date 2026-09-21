@@ -67,7 +67,7 @@ const handleSignOut = async () => {
 
           <!-- Ticket Management Link -->
           <NuxtLink
-            to="/staff"
+            to="/ticket-management"
             active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
             class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
           >
@@ -85,6 +85,28 @@ const handleSignOut = async () => {
               />
             </svg>
             Ticket Management
+          </NuxtLink>
+
+          <!-- Staff Station Link -->
+          <NuxtLink
+            to="/staff"
+            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
+            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 7h6m-3-3v6m-7 9h14a2 2 0 002-2V7a2 2 0 00-2-2h-1.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0015.172 3H8.828a2 2 0 00-1.414.586l-.828.828A2 2 0 015.172 5H4a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+            Staff Station
           </NuxtLink>
 
           <!-- Station Management Link (Admin Only) -->

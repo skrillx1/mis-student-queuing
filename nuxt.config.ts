@@ -12,6 +12,9 @@ export default defineNuxtConfig({
   auth: {
     provider: {
       type: "local",
+      token: {
+        maxAgeInSeconds: 60 * 60 * 24,
+      },
       endpoints: {
         signIn: { path: "/login", method: "post" },
         signOut: { path: "/logout", method: "post" },

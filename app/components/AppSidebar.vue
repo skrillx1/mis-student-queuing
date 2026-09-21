@@ -45,6 +45,7 @@ const handleSignOut = async () => {
         <nav class="space-y-1">
           <!-- Dashboard Link -->
           <NuxtLink
+            v-if="isAdmin"
             to="/dashboard"
             active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
             class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
@@ -67,6 +68,7 @@ const handleSignOut = async () => {
 
           <!-- Ticket Management Link -->
           <NuxtLink
+            v-if="isAdmin"
             to="/ticket-management"
             active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
             class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
@@ -157,6 +159,7 @@ const handleSignOut = async () => {
 
           <!-- Generate Report Link -->
           <NuxtLink
+            v-if="isAdmin"
             to="/reports"
             active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
             class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"

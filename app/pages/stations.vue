@@ -4,11 +4,14 @@ const { status, data: authData } = useAuth();
 definePageMeta({
   middleware: [
     async () => {
-      const { status } = useAuth();
+      const { status, data: authData } = useAuth();
 
       // If unauthenticated, redirect to login page
       if (status.value === "unauthenticated") {
         return navigateTo("/login");
+      }
+      if (authData.value?.role?.toLowerCase() !== "admin") {
+        return navigateTo("/staff");
       }
     },
   ],

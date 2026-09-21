@@ -505,16 +505,19 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
-const { status } = useAuth();
+const { status, data: authData } = useAuth();
 
 definePageMeta({
   middleware: [
-    async (to) => {
-      const { status } = useAuth();
+    async () => {
+      const { status, data: authData } = useAuth();
 
       // If unauthenticated, redirect to login page
       if (status.value === "unauthenticated") {
         return navigateTo("/login");
+      }
+      if (authData.value?.role?.toLowerCase() !== "admin") {
+        return navigateTo("/staff");
       }
     },
   ],

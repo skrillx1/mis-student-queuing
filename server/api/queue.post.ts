@@ -1,4 +1,5 @@
 import { pool } from "../utils/db";
+import { broadcastQueueUpdate } from "../utils/queue-events";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -53,6 +54,12 @@ export default defineEventHandler(async (event) => {
        VALUES ($1, $2, $3, $4, 'waiting', NOW())`,
       [idnumber, fullname, servicetype, ticketnumber],
     );
+
+    broadcastQueueUpdate({
+      type: "waiting",
+      ticket: ticketnumber,
+      status: "waiting",
+    });
 
     return {
       status: "success",

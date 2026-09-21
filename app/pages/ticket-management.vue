@@ -529,7 +529,10 @@ const toast = reactive({
 });
 
 let toastTimeout = null;
-let pollInterval = null;
+let eventSource = null;
+let refreshTimer = null;
+let isRefreshing = false;
+let refreshQueued = false;
 const filters = reactive({
   date: "",
 });
@@ -706,18 +709,25 @@ const onDrop = async (event, stationCode) => {
 };
 
 /* ================= POLLING LOGIC ================= */
-const startPolling = () => {
-  if (pollInterval) return;
-  pollInterval = setInterval(async () => {
-    await fetchQueues();
-  }, 5000);
-};
-
-const stopPolling = () => {
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
+const scheduleQueueRefresh = () => {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(async () => {
+    refreshTimer = null;
+    if (isRefreshing) {
+      refreshQueued = true;
+      return;
+    }
+    isRefreshing = true;
+    try {
+      await fetchQueues();
+    } finally {
+      isRefreshing = false;
+      if (refreshQueued) {
+        refreshQueued = false;
+        scheduleQueueRefresh();
+      }
+    }
+  }, 100);
 };
 
 /* ================= WATCHERS ================= */
@@ -844,11 +854,25 @@ onMounted(async () => {
   }
 
   await fetchQueues();
-  startPolling();
+  if (typeof window !== "undefined") {
+    eventSource = new EventSource("/api/queue/events");
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (!data.heartbeat && !data.connected) scheduleQueueRefresh();
+      } catch (error) {
+        console.error("Failed to process queue update:", error);
+      }
+    };
+  }
 });
 
 onBeforeUnmount(() => {
-  stopPolling();
+  if (refreshTimer) clearTimeout(refreshTimer);
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
   if (toastTimeout) clearTimeout(toastTimeout);
 });
 </script>

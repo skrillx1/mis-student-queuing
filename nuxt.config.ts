@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  modules: ["@nuxtjs/tailwindcss", "@sidebase/nuxt-auth"],
+  modules: ["@nuxtjs/tailwindcss", "@sidebase/nuxt-auth", "nuxt-charts"],
   postcss: {
     plugins: {
       tailwindcss: {},

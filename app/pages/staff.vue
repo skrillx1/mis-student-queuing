@@ -27,6 +27,14 @@
           Station {{ staffStation.code }}
         </p>
       </div>
+      <button
+        v-if="notificationsSupported && notificationPermission !== 'granted'"
+        type="button"
+        @click="requestNotificationPermission"
+        class="h-8 px-2.5 bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 rounded-lg text-[11px] font-semibold transition-colors"
+      >
+        Enable alerts
+      </button>
     </div>
     <div
       v-if="staffError || staffSuccess"
@@ -141,23 +149,38 @@
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-2 sm:shrink-0">
-              <button
-                type="button"
-                @click="updateStaffTicket(ticket, 'onhold')"
-                :disabled="staffUpdating === ticket.id"
-                class="px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
+            <div
+              class="flex flex-col sm:flex-row sm:items-center gap-2 sm:shrink-0"
+            >
+              <div
+                v-if="isIdProcessing(ticket.servicetype)"
+                class="flex flex-col gap-1 w-full sm:w-52"
               >
-                On hold
-              </button>
-              <button
-                type="button"
-                @click="updateStaffTicket(ticket, 'done')"
-                :disabled="staffUpdating === ticket.id"
-                class="px-4 py-2 rounded-xl bg-[#003300] text-white text-xs font-semibold hover:bg-emerald-900 disabled:opacity-50"
-              >
-                Mark done
-              </button>
+                <input
+                  v-model="idPictureMap[ticket.id]"
+                  type="text"
+                  placeholder="ID picture filename"
+                  class="h-9 text-xs px-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 w-full transition-all"
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="updateStaffTicket(ticket, 'onhold')"
+                  :disabled="staffUpdating === ticket.id"
+                  class="px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50"
+                >
+                  On hold
+                </button>
+                <button
+                  type="button"
+                  @click="updateStaffTicket(ticket, 'done')"
+                  :disabled="staffUpdating === ticket.id"
+                  class="px-4 py-2 rounded-xl bg-[#003300] text-white text-xs font-semibold hover:bg-emerald-900 disabled:opacity-50"
+                >
+                  Mark done
+                </button>
+              </div>
             </div>
           </article>
         </div>
@@ -663,6 +686,8 @@ const staffLoading = ref(true);
 const staffUpdating = ref(null);
 const staffError = ref("");
 const staffSuccess = ref("");
+const staffKnownTicketIds = ref(new Set());
+const staffHasLoadedTickets = ref(false);
 
 const staffServingTickets = computed(() =>
   staffTickets.value.filter((ticket) => ticket.status === "serving"),
@@ -674,6 +699,29 @@ const staffOnHoldTickets = computed(() =>
     .sort((a, b) => Number(b.id) - Number(a.id)),
 );
 
+const showStaffTicketNotification = (ticket) => {
+  if (
+    !notificationsSupported.value ||
+    notificationPermission.value !== "granted"
+  ) {
+    return;
+  }
+
+  const notification = new Notification(
+    `Ticket ${ticket.ticketnumber} assigned`,
+    {
+      body: `${ticket.fullname || "Client"} - ${ticket.servicetype || "Service"}`,
+      tag: `staff-ticket-${ticket.id}`,
+    },
+  );
+
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+    navigateTo("/staff");
+  };
+};
+
 const fetchStaffTickets = async () => {
   staffLoading.value = true;
   staffError.value = "";
@@ -684,7 +732,18 @@ const fetchStaffTickets = async () => {
       },
     });
     staffStation.value = response.station;
-    staffTickets.value = response.tickets || [];
+    const nextTickets = response.tickets || [];
+    if (staffHasLoadedTickets.value) {
+      const newTickets = nextTickets.filter(
+        (ticket) =>
+          !staffKnownTicketIds.value.has(ticket.id) &&
+          ticket.status === "serving",
+      );
+      newTickets.forEach(showStaffTicketNotification);
+    }
+    staffKnownTicketIds.value = new Set(nextTickets.map((ticket) => ticket.id));
+    staffHasLoadedTickets.value = true;
+    staffTickets.value = nextTickets;
   } catch (error) {
     staffError.value =
       error?.data?.statusMessage || "Unable to load station tickets.";
@@ -697,20 +756,45 @@ const updateStaffTicket = async (ticket, nextStatus) => {
   staffUpdating.value = ticket.id;
   staffError.value = "";
   staffSuccess.value = "";
+
   try {
-    await $fetch("/api/staff/ticket-action", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer session-token-${authData.value?.id}`,
-      },
-      body: { ticketId: ticket.id, status: nextStatus },
-    });
+    if (nextStatus === "done" && isIdProcessing(ticket.servicetype)) {
+      const filename = (idPictureMap[ticket.id] || "").trim();
+      if (!filename) {
+        staffError.value =
+          "Please enter the ID picture filename before marking this ticket as done.";
+        return;
+      }
+
+      await $fetch("/api/staff/done", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer session-token-${authData.value?.id}`,
+        },
+        body: {
+          id: ticket.id,
+          id_picture_filename: filename,
+        },
+      });
+
+      delete idPictureMap[ticket.id];
+    } else {
+      await $fetch("/api/staff/ticket-action", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer session-token-${authData.value?.id}`,
+        },
+        body: { ticketId: ticket.id, status: nextStatus },
+      });
+    }
+
     staffSuccess.value =
       nextStatus === "done"
         ? `Ticket ${ticket.ticketnumber} was marked done.`
         : nextStatus === "serving"
           ? `Ticket ${ticket.ticketnumber} is now serving.`
           : `Ticket ${ticket.ticketnumber} was placed on hold.`;
+
     await fetchStaffTickets();
   } catch (error) {
     staffError.value =
@@ -722,6 +806,10 @@ const updateStaffTicket = async (ticket, nextStatus) => {
 
 let staffEventSource = null;
 onMounted(async () => {
+  if (typeof window !== "undefined" && "Notification" in window) {
+    notificationsSupported.value = true;
+    notificationPermission.value = Notification.permission;
+  }
   await fetchStaffTickets();
   if (typeof window !== "undefined") {
     staffEventSource = new EventSource("/api/queue/events");

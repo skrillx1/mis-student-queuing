@@ -13,6 +13,7 @@
     "@sidebase/nuxt-auth": "^1.3.1",
     "next-auth": "^4.21.1",
     "nuxt": "^4.4.2",
+    "nuxt-charts": "latest",
     "pg": "^8.20.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",

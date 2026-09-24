@@ -897,20 +897,8 @@ const fetchReportData = async () => {
     }
 
     const data = await $fetch("/api/reports", { query });
-    let fetchedTickets = data?.tickets || [];
+    const fetchedTickets = data?.tickets || [];
     Object.assign(summary, data?.summary || {});
-
-    // Precise date filtering on tickets based on active date range
-    if (startDate && endDate) {
-      const minTimestamp = new Date(startDate + "T00:00:00").getTime();
-      const maxTimestamp = new Date(endDate + "T23:59:59.999").getTime();
-
-      fetchedTickets = fetchedTickets.filter((t) => {
-        if (!t.created_at) return false;
-        const time = new Date(t.created_at).getTime();
-        return time >= minTimestamp && time <= maxTimestamp;
-      });
-    }
 
     ticketData.value = fetchedTickets;
 

@@ -11,9 +11,10 @@ export default defineEventHandler(async (event) => {
   const queryArgs: any[] = [];
 
   // Calculate Date Filters
-  if (filterType === "custom" && startDateParam && endDateParam) {
-    timeFilterClause = "AND created_at >= $1 AND created_at <= $2";
-    queryArgs.push(startDateParam, `${endDateParam}T23:59:59`);
+  if (startDateParam && endDateParam) {
+    timeFilterClause =
+      "AND created_at >= $1::date AND created_at < ($2::date + INTERVAL '1 day')";
+    queryArgs.push(startDateParam, endDateParam);
   } else {
     const now = new Date();
     let startDate = new Date();

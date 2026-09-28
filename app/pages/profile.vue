@@ -137,14 +137,14 @@ const showSection = (section) => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="ui-page max-w-4xl">
     <div>
       <p
         class="text-[10px] font-bold uppercase tracking-wider text-emerald-700"
       >
         Account
       </p>
-      <h1 class="text-2xl font-bold text-slate-900 mt-1">My Profile</h1>
+      <h1 class="ui-page-title mt-1">My Profile</h1>
       <p class="text-sm text-slate-500 mt-1">
         View and update the information connected to your account.
       </p>
@@ -293,7 +293,7 @@ const showSection = (section) => {
               type="text"
               autocomplete="name"
               required
-              class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input bg-slate-50 px-4 py-3"
             />
           </div>
           <div>
@@ -308,7 +308,7 @@ const showSection = (section) => {
               type="email"
               autocomplete="email"
               required
-              class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input bg-slate-50 px-4 py-3"
             />
           </div>
           <div>
@@ -398,7 +398,7 @@ const showSection = (section) => {
               type="password"
               autocomplete="current-password"
               required
-              class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input bg-slate-50 px-4 py-3"
             />
           </div>
           <div>
@@ -414,7 +414,7 @@ const showSection = (section) => {
               autocomplete="new-password"
               minlength="8"
               required
-              class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input bg-slate-50 px-4 py-3"
             />
           </div>
           <div>
@@ -430,7 +430,7 @@ const showSection = (section) => {
               autocomplete="new-password"
               minlength="8"
               required
-              class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input bg-slate-50 px-4 py-3"
             />
           </div>
         </div>

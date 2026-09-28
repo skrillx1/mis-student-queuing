@@ -119,7 +119,7 @@ onMounted(() => {
     </p>
   </div>
 
-  <div v-else class="max-w-6xl mx-auto space-y-6">
+  <div v-else class="ui-page">
     <div
       class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
     >
@@ -129,16 +129,12 @@ onMounted(() => {
         >
           Administration
         </p>
-        <h1 class="text-2xl font-bold text-slate-900 mt-1">User Management</h1>
+        <h1 class="ui-page-title mt-1">User Management</h1>
         <p class="text-sm text-slate-500 mt-1">
           Create and review accounts that can access the queueing system.
         </p>
       </div>
-      <button
-        type="button"
-        @click="openAddModal"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#003300] text-white text-sm font-semibold hover:bg-emerald-900 transition-colors"
-      >
+      <button type="button" @click="openAddModal" class="ui-button-primary">
         <span class="text-lg leading-none">+</span>
         Add user
       </button>
@@ -172,12 +168,13 @@ onMounted(() => {
         <input
           v-model="searchQuery"
           type="search"
+          aria-label="Search users"
           placeholder="Search users..."
-          class="w-full sm:w-64 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+          class="ui-input w-full sm:w-64"
         />
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="ui-table w-full text-left">
           <thead
             class="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500"
           >
@@ -261,7 +258,7 @@ onMounted(() => {
               v-model="form.username"
               required
               autocomplete="off"
-              class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003300]/20"
+              class="ui-input"
             />
           </div>
           <div>
@@ -274,7 +271,7 @@ onMounted(() => {
               v-model="form.name"
               required
               autocomplete="name"
-              class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003300]/20"
+              class="ui-input"
             />
           </div>
           <div>
@@ -288,7 +285,7 @@ onMounted(() => {
               type="email"
               required
               autocomplete="email"
-              class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003300]/20"
+              class="ui-input"
             />
           </div>
           <div>
@@ -296,11 +293,7 @@ onMounted(() => {
               for="new-role"
               class="block text-xs font-bold text-slate-700 mb-1.5"
               >Role</label
-            ><select
-              id="new-role"
-              v-model="form.role"
-              class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20"
-            >
+            ><select id="new-role" v-model="form.role" class="ui-input">
               <option value="staff">Staff</option>
               <option value="admin">Admin</option>
             </select>
@@ -317,7 +310,7 @@ onMounted(() => {
               required
               minlength="8"
               autocomplete="new-password"
-              class="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#003300]/20"
+              class="ui-input"
             />
             <p class="text-[11px] text-slate-400 mt-1">
               Use at least 8 characters.

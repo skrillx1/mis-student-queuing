@@ -32,23 +32,26 @@ const handleSignOut = async () => {
 
 <template>
   <aside
-    class="w-64 bg-white border-r border-slate-200 h-full p-4 flex flex-col justify-between shrink-0 overflow-y-auto"
+    class="flex w-full shrink-0 flex-col justify-between border-b border-slate-200 bg-white p-3 lg:h-full lg:w-64 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4"
   >
     <div class="space-y-6">
       <!-- Navigation Group -->
       <div>
         <p
-          class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2"
+          class="mb-2 hidden px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 lg:block"
         >
           Main Menu
         </p>
-        <nav class="space-y-1">
+        <nav
+          aria-label="Main menu"
+          class="flex min-w-0 gap-1 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0"
+        >
           <!-- Dashboard Link -->
           <NuxtLink
             v-if="isAdmin"
             to="/dashboard"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -70,8 +73,8 @@ const handleSignOut = async () => {
           <NuxtLink
             v-if="isAdmin"
             to="/ticket-management"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -92,8 +95,8 @@ const handleSignOut = async () => {
           <!-- Staff Station Link -->
           <NuxtLink
             to="/staff"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -115,8 +118,8 @@ const handleSignOut = async () => {
           <NuxtLink
             v-if="isAdmin"
             to="/stations"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -138,8 +141,8 @@ const handleSignOut = async () => {
           <NuxtLink
             v-if="isAdmin"
             to="/users"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -161,8 +164,8 @@ const handleSignOut = async () => {
           <NuxtLink
             v-if="isAdmin"
             to="/reports"
-            active-class="bg-emerald-50 text-[#003300] border-emerald-200/60 font-bold"
-            class="flex items-center gap-3 px-3 py-2.5 text-xs rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent transition-colors"
+            active-class="sidebar-link-active"
+            class="sidebar-link"
           >
             <svg
               class="w-4 h-4"
@@ -184,10 +187,12 @@ const handleSignOut = async () => {
     </div>
 
     <!-- User Profile & Sign Out Footer -->
-    <div class="pt-4 border-t border-slate-100 space-y-3 shrink-0">
+    <div
+      class="mt-2 flex shrink-0 items-center justify-between gap-2 border-t border-slate-100 pt-2 lg:mt-auto lg:block lg:space-y-3 lg:pt-4"
+    >
       <NuxtLink
         to="/profile"
-        class="flex items-center gap-3 rounded-xl p-2 -mx-2 hover:bg-slate-50 transition-colors"
+        class="flex min-w-0 items-center gap-2 rounded-xl p-1 transition-colors hover:bg-slate-50 lg:-mx-2 lg:gap-3 lg:p-2"
       >
         <!-- Dynamic Avatar Image or Initials -->
         <img
@@ -216,7 +221,7 @@ const handleSignOut = async () => {
       <button
         type="button"
         @click="handleSignOut"
-        class="w-full flex items-center gap-3 px-3 py-2 text-xs rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent transition-colors font-semibold"
+        class="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 focus-visible:ring-2 focus-visible:ring-rose-600 lg:w-full"
       >
         <svg
           class="w-4 h-4"

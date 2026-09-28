@@ -206,22 +206,18 @@ const formatDate = (dateStr) => {
 </script>
 
 <template>
-  <div class="p-6 max-w-7xl mx-auto space-y-6">
+  <div class="ui-page">
     <!-- Header Section -->
     <div
       class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
     >
       <div>
-        <h1 class="text-xl font-bold text-slate-900">Station Management</h1>
+        <h1 class="ui-page-title">Station Management</h1>
         <p class="text-xs text-slate-500 mt-0.5">
           Manage system stations, routing locations, and desk allocations.
         </p>
       </div>
-      <button
-        type="button"
-        @click="openAddModal"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#003300] hover:bg-emerald-900 text-white font-medium text-xs rounded-xl shadow-sm transition-colors"
-      >
+      <button type="button" @click="openAddModal" class="ui-button-primary">
         <svg
           class="w-4 h-4"
           fill="none"
@@ -241,7 +237,7 @@ const formatDate = (dateStr) => {
 
     <!-- Controls Bar -->
     <div
-      class="flex items-center justify-between bg-white p-3 rounded-2xl border border-slate-200"
+      class="flex flex-col items-stretch justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center"
     >
       <div class="relative w-full sm:w-72">
         <svg
@@ -260,8 +256,9 @@ const formatDate = (dateStr) => {
         <input
           v-model="searchQuery"
           type="text"
+          aria-label="Search stations by code or name"
           placeholder="Search by code or name..."
-          class="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+          class="ui-input pl-9"
         />
       </div>
       <span class="text-xs text-slate-400 font-medium">
@@ -272,7 +269,7 @@ const formatDate = (dateStr) => {
     <!-- Table Container -->
     <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="ui-table w-full border-collapse">
           <thead>
             <tr
               class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold"
@@ -376,7 +373,7 @@ const formatDate = (dateStr) => {
               required
               readonly
               placeholder="Select a user"
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input"
             />
           </div>
 
@@ -390,7 +387,7 @@ const formatDate = (dateStr) => {
               id="assigned-user"
               v-model="form.assignedUserId"
               required
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input"
             >
               <option value="" disabled>Select a user</option>
               <option v-for="user in users" :key="user.id" :value="user.id">
@@ -410,7 +407,7 @@ const formatDate = (dateStr) => {
               v-model="form.description"
               rows="3"
               placeholder="e.g. Handles email & general support concerns"
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003300]/20 focus:border-[#003300]"
+              class="ui-input"
             ></textarea>
           </div>
 

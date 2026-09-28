@@ -1,90 +1,93 @@
 <template>
-  <!-- COMPACT CONTROLS BAR -->
-  <header
-    class="flex justify-end items-center gap-2 mb-3 bg-white px-3 py-2 rounded-xl border border-slate-200/80 shadow-xs"
-  >
-    <!-- FILTERS & NOTIFICATION CONTROLS -->
-    <div class="flex flex-wrap items-center justify-end gap-2 w-full">
-      <!-- NOTIFICATION SOUND TOGGLE -->
-      <button
-        @click="isMuted = !isMuted"
-        type="button"
-        :title="isMuted ? 'Unmute queue alerts' : 'Mute queue alerts'"
-        :class="[
-          'h-8 px-2.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer',
-          isMuted
-            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
-        ]"
-      >
-        <svg
-          v-if="!isMuted"
-          class="w-4 h-4 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+  <div class="ui-page">
+    <!-- COMPACT CONTROLS BAR -->
+    <header
+      class="flex justify-end items-center gap-2 mb-3 bg-white px-3 py-2 rounded-xl border border-slate-200/80 shadow-xs"
+    >
+      <!-- FILTERS & NOTIFICATION CONTROLS -->
+      <div class="flex flex-wrap items-center justify-end gap-2 w-full">
+        <!-- NOTIFICATION SOUND TOGGLE -->
+        <button
+          @click="isMuted = !isMuted"
+          type="button"
+          :title="isMuted ? 'Unmute queue alerts' : 'Mute queue alerts'"
+          :class="[
+            'h-8 px-2.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer',
+            isMuted
+              ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+              : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+          ]"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-          />
-        </svg>
-        <svg
-          v-else
-          class="w-4 h-4 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-          />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
-          />
-        </svg>
-        <span>{{ isMuted ? "Sound Off" : "Sound On" }}</span>
-      </button>
+          <svg
+            v-if="!isMuted"
+            class="w-4 h-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+            />
+          </svg>
+          <svg
+            v-else
+            class="w-4 h-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+            />
+          </svg>
+          <span>{{ isMuted ? "Sound Off" : "Sound On" }}</span>
+        </button>
 
-      <!-- DESKTOP NOTIFICATION PERMISSION TOGGLE -->
-      <button
-        v-if="notificationsSupported && notificationPermission !== 'granted'"
-        @click="requestNotificationPermission"
-        type="button"
-        title="Enable desktop notifications"
-        class="h-8 px-2.5 bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-      >
-        <svg
-          class="w-4 h-4 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        <!-- DESKTOP NOTIFICATION PERMISSION TOGGLE -->
+        <button
+          v-if="notificationsSupported && notificationPermission !== 'granted'"
+          @click="requestNotificationPermission"
+          type="button"
+          title="Enable desktop notifications"
+          class="h-8 px-2.5 bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-        <span>Enable Alerts</span>
-      </button>
+          <svg
+            class="w-4 h-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
+          </svg>
+          <span>Enable Alerts</span>
+        </button>
 
-      <input
-        type="date"
-        v-model="filters.date"
-        class="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all cursor-pointer"
-      />
-    </div>
-  </header>
+        <input
+          type="date"
+          v-model="filters.date"
+          aria-label="Filter tickets by date"
+          class="h-8 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all cursor-pointer"
+        />
+      </div>
+    </header>
+  </div>
 
   <!-- STATIONS HEADER DROP ZONES (SERVING TICKETS HERE) -->
   <section class="mb-3">

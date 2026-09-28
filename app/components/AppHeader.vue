@@ -1,22 +1,22 @@
 <!-- components/AppHeader.vue -->
 <template>
   <header
-    class="bg-[#003300] text-white shadow-lg border-b-4 border-[#FFCC00] sticky top-0 z-20"
+    class="border-b border-emerald-950 bg-emerald-950 text-white shadow-sm"
   >
     <div
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4"
+      class="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8"
     >
       <div class="flex items-center gap-3">
         <div
-          class="w-10 h-10 rounded-xl bg-[#FFCC00] text-[#003300] flex items-center justify-center font-black text-lg shadow-inner shrink-0"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-lg font-black text-emerald-950"
         >
           CSU
         </div>
         <div>
-          <h1 class="text-xl font-black tracking-tight text-[#FFCC00]">
+          <p class="text-sm font-bold tracking-tight text-white sm:text-base">
             CSU MIS Queueing System
-          </h1>
-          <p class="text-xs text-emerald-100/80 font-medium">
+          </p>
+          <p class="hidden text-xs font-medium text-emerald-100/80 sm:block">
             Administrative Management Portal
           </p>
         </div>

@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    @apply rounded-xl border border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-emerald-700 ring-offset-2;
+  }
+}
+
+@layer components {
+  .ui-page {
+    @apply mx-auto w-full max-w-7xl space-y-6;
+  }
+
+  .ui-page-header {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  .ui-page-title {
+    @apply text-2xl font-bold tracking-tight text-slate-950;
+  }
+
+  .ui-page-description {
+    @apply mt-1 text-sm text-slate-500;
+  }
+
+  .ui-section-title {
+    @apply text-lg font-bold tracking-tight text-slate-900;
+  }
+
+  .ui-card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .ui-card-header {
+    @apply flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6;
+  }
+
+  .ui-button {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-button-primary {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-900 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-button-secondary {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-button-danger {
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .ui-input {
+    @apply min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20;
+  }
+
+  .ui-label {
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
+  }
+
+  .ui-table-wrap {
+    @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .ui-table {
+    @apply min-w-full divide-y divide-slate-200 text-left text-sm;
+  }
+
+  .ui-table thead {
+    @apply bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  .ui-table th {
+    @apply whitespace-nowrap px-4 py-3 sm:px-5;
+  }
+
+  .ui-table td {
+    @apply px-4 py-3 text-slate-700 sm:px-5;
+  }
+
+  .ui-table tbody tr {
+    @apply border-t border-slate-100 transition-colors hover:bg-slate-50/80;
+  }
+
+  .ui-alert {
+    @apply rounded-xl border px-4 py-3 text-sm;
+  }
+
+  .ui-alert-success {
+    @apply rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800;
+  }
+
+  .ui-alert-error {
+    @apply rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800;
+  }
+
+  .ui-empty-state {
+    @apply rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-12 text-center text-sm text-slate-500;
+  }
+
+  .sidebar-link {
+    @apply flex min-h-10 flex-none items-center gap-3 whitespace-nowrap rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-emerald-700 lg:w-full;
+  }
+
+  .sidebar-link-active {
+    @apply border-emerald-200 bg-emerald-50 font-bold text-emerald-950;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

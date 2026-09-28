@@ -1,8 +1,6 @@
 <!-- pages/reports.vue -->
 <template>
-  <div
-    class="mx-auto flex max-w-7xl flex-col space-y-8 p-4 font-sans text-slate-800 sm:p-6 lg:p-8"
-  >
+  <div class="ui-page flex flex-col font-sans text-slate-800">
     <!-- Data Export Utility Section -->
     <div
       class="order-1 space-y-5 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm"
@@ -68,12 +66,14 @@
           <input
             type="date"
             v-model="exportStartDate"
+            aria-label="Export start date"
             class="bg-transparent border-none text-slate-700 text-xs focus:outline-none cursor-pointer"
           />
           <span class="text-slate-400 font-medium ml-2">To:</span>
           <input
             type="date"
             v-model="exportEndDate"
+            aria-label="Export end date"
             class="bg-transparent border-none text-slate-700 text-xs focus:outline-none cursor-pointer"
           />
         </div>
@@ -81,7 +81,7 @@
         <button
           @click="handleExport"
           :disabled="exporting || !exportStartDate || !exportEndDate"
-          class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white px-5 py-2.5 text-xs rounded-xl font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm hover:shadow"
+          class="ui-button-primary"
         >
           <svg
             v-if="exporting"
@@ -401,12 +401,14 @@
           <input
             type="date"
             v-model="customStartDate"
+            aria-label="Report start date"
             class="bg-transparent border-none text-slate-700 text-xs focus:outline-none cursor-pointer"
           />
           <span class="text-slate-400 font-medium">to</span>
           <input
             type="date"
             v-model="customEndDate"
+            aria-label="Report end date"
             class="bg-transparent border-none text-slate-700 text-xs focus:outline-none cursor-pointer"
           />
         </div>
@@ -415,7 +417,7 @@
         <button
           @click="fetchReportData"
           :disabled="loading"
-          class="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white px-4 py-2 text-xs rounded-xl font-semibold transition-all disabled:opacity-50 cursor-pointer shadow-sm hover:shadow"
+          class="ui-button-primary"
         >
           <svg
             v-if="loading"

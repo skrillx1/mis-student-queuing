@@ -1,5 +1,5 @@
 <template>
-  <div v-if="staffStationView" class="max-w-5xl mx-auto space-y-6">
+  <div v-if="staffStationView" class="ui-page max-w-5xl">
     <div
       class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
     >
@@ -9,7 +9,7 @@
         >
           Staff station
         </p>
-        <h1 class="text-2xl font-bold text-slate-900 mt-1">My tickets</h1>
+        <h1 class="ui-page-title mt-1">My tickets</h1>
         <p class="text-sm text-slate-500 mt-1">
           Only tickets assigned to your station are shown here.
         </p>
@@ -188,7 +188,7 @@
     </section>
   </div>
 
-  <div v-else>
+  <div v-else class="ui-page">
     <!-- COMPACT CONTROLS BAR -->
     <header
       class="flex justify-end items-center gap-2 mb-3 bg-white px-3 py-2 rounded-xl border border-slate-200/80 shadow-xs"

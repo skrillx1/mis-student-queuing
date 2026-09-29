@@ -150,7 +150,7 @@
         <!-- STATION ACTIONS (ONLY RENDER IF A TICKET IS CURRENTLY SERVING) -->
         <div
           v-if="getStationTicket(station.code)"
-          class="pt-1.5 border-t border-emerald-200/60 grid grid-cols-3 gap-1"
+          class="pt-1.5 border-t border-emerald-200/60 grid grid-cols-4 gap-1"
         >
           <!-- RECALL BUTTON -->
           <button
@@ -198,6 +198,29 @@
               />
             </svg>
             <span>Hold</span>
+          </button>
+
+          <!-- SKIP BUTTON -->
+          <button
+            @click="skipTicket(getStationTicket(station.code).id)"
+            type="button"
+            title="Skip ticket"
+            class="inline-flex items-center justify-center gap-1 py-0.5 px-1 rounded-md text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200/80 hover:bg-rose-600 hover:text-white hover:border-rose-600 active:scale-95 transition-all cursor-pointer shadow-2xs"
+          >
+            <svg
+              class="w-3 h-3 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.2"
+                d="M13 5l7 7-7 7M5 5l7 7-7 7"
+              />
+            </svg>
+            <span>Skip</span>
           </button>
 
           <!-- DONE BUTTON -->
@@ -308,7 +331,7 @@
               </div>
 
               <!-- Filename Input for ID Processing -->
-              <div
+              <!-- <div
                 v-if="isIdProcessing(q.servicetype)"
                 class="flex flex-col gap-1 w-full sm:w-auto"
               >
@@ -318,17 +341,7 @@
                   placeholder="ID picture filename"
                   class="h-9 text-xs px-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 w-full sm:w-48 transition-all"
                 />
-              </div>
-
-              <!-- Actions -->
-              <div class="flex items-center gap-2 justify-end">
-                <button
-                  @click="rejectTicket(q.id)"
-                  class="h-8 px-3 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -394,14 +407,14 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-2 justify-end">
+              <!-- <div class="flex items-center gap-2 justify-end">
                 <button
                   @click="markDone(q.id)"
                   class="h-8 px-3 bg-white hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-lg font-medium text-xs transition-colors cursor-pointer"
                 >
                   Done
                 </button>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -804,6 +817,26 @@ const holdTicket = async (id) => {
   await fetchQueues();
 };
 
+const skipTicket = async (id) => {
+  if (!id) return;
+
+  const confirmed = confirm(
+    "Are you sure you want to skip this serving ticket?",
+  );
+  if (!confirmed) return;
+
+  await $fetch("/api/staff/cancel", {
+    method: "POST",
+    body: { id, status: "skipped" },
+  });
+
+  if (idPictureMap[id]) {
+    delete idPictureMap[id];
+  }
+
+  await fetchQueues();
+};
+
 const markDone = async (id) => {
   if (!id) return;
 
@@ -826,26 +859,6 @@ const markDone = async (id) => {
   });
 
   delete idPictureMap[id];
-  await fetchQueues();
-};
-
-const rejectTicket = async (id) => {
-  if (!id) return;
-
-  const confirmed = confirm(
-    "Are you sure you want to cancel/reject this waiting ticket?",
-  );
-  if (!confirmed) return;
-
-  await $fetch("/api/staff/cancel", {
-    method: "POST",
-    body: { id, status: "rejected" },
-  });
-
-  if (idPictureMap[id]) {
-    delete idPictureMap[id];
-  }
-
   await fetchQueues();
 };
 

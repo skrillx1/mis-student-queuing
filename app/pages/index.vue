@@ -1,5 +1,6 @@
 <template>
   <div
+    @contextmenu.prevent
     class="min-h-screen h-screen bg-slate-50 text-slate-800 flex flex-col font-sans overflow-hidden relative select-none antialiased"
   >
     <div

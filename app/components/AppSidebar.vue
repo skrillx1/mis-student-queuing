@@ -114,6 +114,29 @@ const handleSignOut = async () => {
             Staff Station
           </NuxtLink>
 
+          <NuxtLink
+            to="/id-applications"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors"
+            active-class="bg-emerald-50 text-emerald-800 font-bold"
+            inactive-class="text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          >
+            <!-- ID Card / Document Icon -->
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-6 0h6"
+              />
+            </svg>
+            <span>ID Applications</span>
+          </NuxtLink>
+
           <!-- Station Management Link (Admin Only) -->
           <NuxtLink
             v-if="isAdmin"

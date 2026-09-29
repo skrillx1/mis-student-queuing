@@ -555,7 +555,7 @@ const confirmClaimRequest = async () => {
 };
 
 /* ================= CONSTANTS ================= */
-const services = ["Re-ID", "Account Problem", "Clearance Signing", "Inquiry"];
+const services = ["Account Problem", "Clearance Signing", "Inquiry"];
 
 /* ================= HELPERS ================= */
 const clearForm = () => {

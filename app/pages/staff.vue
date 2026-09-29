@@ -141,6 +141,14 @@
               <div class="flex items-center gap-2">
                 <button
                   type="button"
+                  @click="skipTicket(ticket)"
+                  :disabled="staffUpdating === ticket.id"
+                  class="px-4 py-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold hover:bg-rose-100 disabled:opacity-50 transition-colors"
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
                   @click="updateStaffTicket(ticket, 'onhold')"
                   :disabled="staffUpdating === ticket.id"
                   class="px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100 disabled:opacity-50 transition-colors"
@@ -321,6 +329,39 @@ const fetchStaffTickets = async () => {
       error?.data?.statusMessage || "Unable to load station tickets.";
   } finally {
     staffLoading.value = false;
+  }
+};
+
+const skipTicket = async (ticket) => {
+  if (!ticket?.id) return;
+
+  const confirmed = confirm(
+    `Are you sure you want to skip ticket #${ticket.ticketnumber}?`,
+  );
+  if (!confirmed) return;
+
+  staffUpdating.value = ticket.id;
+  staffError.value = "";
+  staffSuccess.value = "";
+
+  try {
+    await $fetch("/api/staff/cancel", {
+      method: "POST",
+      headers: authHeaders.value,
+      body: { id: ticket.id, status: "skipped" },
+    });
+
+    if (idPictureMap[ticket.id]) {
+      delete idPictureMap[ticket.id];
+    }
+
+    staffSuccess.value = `Ticket ${ticket.ticketnumber} was skipped.`;
+    await fetchStaffTickets();
+  } catch (error) {
+    staffError.value =
+      error?.data?.statusMessage || "Unable to skip this ticket.";
+  } finally {
+    staffUpdating.value = null;
   }
 };
 

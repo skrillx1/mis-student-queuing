@@ -19,12 +19,54 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Selected Count Display -->
+        <span
+          v-if="selectedIds.length > 0"
+          class="h-9 px-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center shrink-0 select-none"
+        >
+          {{ selectedIds.length }} selected
+        </span>
+
+        <!-- Export Selected Button -->
+        <button
+          type="button"
+          @click="handleExport"
+          :disabled="selectedIds.length === 0 || isExporting"
+          aria-label="Export selected applications to CSV"
+          class="h-9 px-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+        >
+          <svg
+            class="w-3.5 h-3.5"
+            :class="{ 'animate-spin': isExporting }"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              v-if="!isExporting"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+            <path
+              v-else
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          Export Selected
+        </button>
+
+        <!-- Refresh Button -->
         <button
           type="button"
           @click="refresh"
-          :disabled="pending"
+          :disabled="pending || isExporting"
           aria-label="Refresh ID applications list"
-          class="h-9 px-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="h-9 px-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
         >
           <svg
             class="w-3.5 h-3.5"
@@ -181,7 +223,28 @@
       </div>
     </div>
 
-    <!-- Feedback Banner -->
+    <!-- Export Notification Banner -->
+    <div
+      v-if="exportNotification"
+      :class="[
+        'rounded-xl border px-4 py-3 text-xs flex items-center justify-between',
+        exportNotification.type === 'success'
+          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+          : 'bg-rose-50 border-rose-200 text-rose-700',
+      ]"
+      role="alert"
+    >
+      <span>{{ exportNotification.message }}</span>
+      <button
+        type="button"
+        @click="exportNotification = null"
+        class="text-xs font-semibold underline hover:no-underline ml-4 shrink-0"
+      >
+        Dismiss
+      </button>
+    </div>
+
+    <!-- Data Fetch Feedback Banner -->
     <div
       v-if="error"
       class="rounded-xl border bg-rose-50 border-rose-200 text-rose-700 px-4 py-3 text-xs flex items-center justify-between"
@@ -259,6 +322,17 @@
               <tr
                 class="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase tracking-wider font-bold"
               >
+                <!-- Select All Checkbox Header -->
+                <th scope="col" class="py-3 px-4 w-10 text-center select-none">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate.prop="isSomeSelected"
+                    @change="toggleSelectAll"
+                    aria-label="Select all applications on this view"
+                    class="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+                  />
+                </th>
                 <th scope="col" class="py-3 px-4">Student</th>
                 <th scope="col" class="py-3 px-4">Course</th>
                 <th scope="col" class="py-3 px-4">Emergency Contact</th>
@@ -282,8 +356,25 @@
               <tr
                 v-for="app in paginatedApplications"
                 :key="app.id"
-                class="hover:bg-slate-50/80 transition-colors"
+                :class="[
+                  'transition-colors',
+                  selectedIds.includes(app.id)
+                    ? 'bg-emerald-50/40 hover:bg-emerald-50/70'
+                    : 'hover:bg-slate-50/80',
+                ]"
               >
+                <!-- Row Checkbox -->
+                <td class="py-3.5 px-4 text-center select-none">
+                  <input
+                    type="checkbox"
+                    :value="app.id"
+                    :checked="selectedIds.includes(app.id)"
+                    @change="toggleSelectRow(app.id)"
+                    :aria-label="`Select application for ${formatFullName(app)}`"
+                    class="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+                  />
+                </td>
+
                 <!-- Student Info -->
                 <td class="py-3.5 px-4">
                   <div class="font-bold text-slate-900">
@@ -450,10 +541,165 @@ const dateRange = ref([]);
 const sortDirection = ref("desc"); // 'asc' = oldest first, 'desc' = newest first
 const currentPage = ref(1);
 
+// Bulk Selection & Export state
+const selectedIds = ref([]);
+const isExporting = ref(false);
+const exportNotification = ref(null);
+
 // --- Data Fetching ---
 const { data, pending, error, refresh } = useFetch("/api/id-applications");
 
 const applications = computed(() => data.value?.applications || []);
+
+// --- Selection Logic ---
+const isAllSelected = computed(() => {
+  if (filteredApplications.value.length === 0) return false;
+  return filteredApplications.value.every((app) =>
+    selectedIds.value.includes(app.id),
+  );
+});
+
+const isSomeSelected = computed(() => {
+  if (selectedIds.value.length === 0) return false;
+  return (
+    !isAllSelected.value &&
+    filteredApplications.value.some((app) => selectedIds.value.includes(app.id))
+  );
+});
+
+const toggleSelectAll = (event) => {
+  const currentFilteredIds = filteredApplications.value.map((app) => app.id);
+  if (event.target.checked) {
+    selectedIds.value = Array.from(
+      new Set([...selectedIds.value, ...currentFilteredIds]),
+    );
+  } else {
+    const currentFilteredSet = new Set(currentFilteredIds);
+    selectedIds.value = selectedIds.value.filter(
+      (id) => !currentFilteredSet.has(id),
+    );
+  }
+};
+
+const toggleSelectRow = (id) => {
+  const index = selectedIds.value.indexOf(id);
+  if (index > -1) {
+    selectedIds.value.splice(index, 1);
+  } else {
+    selectedIds.value.push(id);
+  }
+};
+
+// --- CSV Helper ---
+const escapeCsvValue = (val) => {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  return `"${str.replace(/"/g, '""')}"`;
+};
+
+const generateAndDownloadCsv = (items) => {
+  const headers = [
+    "ID",
+    "First Name",
+    "Middle Name",
+    "Last Name",
+    "Student ID",
+    "Course",
+    "Contact Name",
+    "Contact Number",
+    "Contact Address",
+    "Created At",
+    "Status",
+  ];
+
+  const rows = items.map((app) => [
+    escapeCsvValue(app.id),
+    escapeCsvValue(app.firstname),
+    escapeCsvValue(app.middlename),
+    escapeCsvValue(app.lastname),
+    escapeCsvValue(app.studid),
+    escapeCsvValue(app.course),
+    escapeCsvValue(app.contact_name),
+    escapeCsvValue(app.contact_number),
+    escapeCsvValue(app.contact_address),
+    escapeCsvValue(app.created_at),
+    escapeCsvValue(app.status || "Pending Export"),
+  ]);
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
+    "\r\n",
+  );
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const filename = `id-applications-${year}-${month}-${day}.csv`;
+
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// --- Export Execution Flow ---
+const handleExport = async () => {
+  if (selectedIds.value.length === 0 || isExporting.value) return;
+
+  const count = selectedIds.value.length;
+  if (!confirm(`Export ${count} selected application(s)?`)) {
+    return;
+  }
+
+  isExporting.value = true;
+  exportNotification.value = null;
+
+  try {
+    const selectedApps = applications.value.filter((app) =>
+      selectedIds.value.includes(app.id),
+    );
+
+    if (selectedApps.length === 0) {
+      throw new Error("No applications match the current selection.");
+    }
+
+    // 1. Download CSV
+    generateAndDownloadCsv(selectedApps);
+
+    // 2. Update status via POST endpoint
+    const response = await $fetch("/api/id-applications-status", {
+      method: "POST",
+      body: { ids: selectedIds.value },
+    });
+
+    if (response?.success) {
+      exportNotification.value = {
+        type: "success",
+        message: `Successfully exported ${selectedApps.length} application(s) and updated status.`,
+      };
+
+      // 3. Refresh application list & clear selection
+      await refresh();
+      selectedIds.value = [];
+    } else {
+      throw new Error("Failed to update status on server.");
+    }
+  } catch (err) {
+    console.error("Export operation failed:", err);
+    exportNotification.value = {
+      type: "error",
+      message: err.message || "An error occurred during CSV export.",
+    };
+  } finally {
+    isExporting.value = false;
+  }
+};
 
 // --- Date Calculation Helpers ---
 const getDailyRange = () => {
@@ -466,7 +712,7 @@ const getDailyRange = () => {
 
 const getWeeklyRange = () => {
   const now = new Date();
-  const dayOfWeek = now.getDay(); // 0 is Sunday
+  const dayOfWeek = now.getDay();
   const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
 
   const start = new Date(now);
@@ -510,7 +756,7 @@ const formatDate = (dateString) => {
   return isNaN(date.getTime()) ? "N/A" : dateTimeFormatter.format(date);
 };
 
-// Dynamic Tailwind styling based on the status string
+// Dynamic Tailwind styling based on status string
 const getStatusBadgeClass = (status) => {
   if (!status) return "bg-amber-50 text-amber-800 border-amber-200";
 

@@ -6,6 +6,9 @@ export default defineNuxtConfig({
   tailwindcss: {
     cssPath: "~/assets/css/design-system.css",
   },
+  build: {
+    transpile: ["@vuepic/vue-datepicker"],
+  },
   postcss: {
     plugins: {
       tailwindcss: {},

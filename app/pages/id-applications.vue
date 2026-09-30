@@ -51,7 +51,7 @@
       class="bg-white p-4 border border-slate-200 rounded-2xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 shadow-sm"
     >
       <div
-        class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1"
+        class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 flex-wrap"
       >
         <!-- Quick Sort Button -->
         <button
@@ -87,7 +87,7 @@
         </button>
 
         <!-- Search Input -->
-        <div class="relative w-full sm:w-72">
+        <div class="relative w-full sm:w-64">
           <label for="search-applications" class="sr-only"
             >Search applications</label
           >
@@ -114,18 +114,49 @@
           </svg>
         </div>
 
-        <!-- Date Range Picker -->
-        <div class="w-full sm:w-64">
+        <!-- Status Filter Dropdown -->
+        <div class="w-full sm:w-40">
+          <label for="status-filter" class="sr-only">Filter by status</label>
+          <select
+            id="status-filter"
+            v-model="selectedStatus"
+            class="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all text-slate-700 font-medium cursor-pointer"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="Pending Export">Pending Export</option>
+            <option value="Exported">Exported</option>
+          </select>
+        </div>
+
+        <!-- Date Range Filter Selector -->
+        <div class="w-full sm:w-36">
+          <label for="date-preset" class="sr-only">Filter by date preset</label>
+          <select
+            id="date-preset"
+            v-model="datePreset"
+            @change="handlePresetChange"
+            class="w-full h-9 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all text-slate-700 font-medium cursor-pointer"
+          >
+            <option value="ALL">All Dates</option>
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="CUSTOM">Custom Date</option>
+          </select>
+        </div>
+
+        <!-- Date Range Picker (shown only when Custom Date is selected) -->
+        <div v-if="datePreset === 'CUSTOM'" class="w-full sm:w-60">
           <VueDatePicker
-            v-model="dateRange"
-            range
             :auto-apply="false"
-            teleport="body"
-            :partial-range="false"
             :enable-time-picker="false"
-            placeholder="Filter by date range..."
+            :partial-range="false"
             format="MMM dd, yyyy"
             input-class-name="!h-9 !text-xs !bg-slate-50 !border-slate-200 !rounded-xl focus:!ring-2 focus:!ring-emerald-600/20 focus:!border-emerald-600"
+            placeholder="Filter by custom date range..."
+            range
+            teleport="body"
+            v-model="dateRange"
           />
         </div>
 
@@ -206,7 +237,7 @@
         <p class="text-xs text-slate-400 mt-1">
           {{
             hasActiveFilters
-              ? "Try adjusting or resetting your search and date filters."
+              ? "Try adjusting or resetting your search, status, and date filters."
               : "No records exist in the database."
           }}
         </p>
@@ -402,7 +433,7 @@ import "@vuepic/vue-datepicker/dist/main.css";
 // --- Constants ---
 const ITEMS_PER_PAGE = 10;
 
-// Reusable Date Formatter instance (avoids recreation inside render loops)
+// Reusable Date Formatter instance
 const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -413,6 +444,8 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
 
 // --- State ---
 const searchQuery = ref("");
+const selectedStatus = ref("ALL");
+const datePreset = ref("ALL"); // 'ALL', 'DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM'
 const dateRange = ref([]);
 const sortDirection = ref("desc"); // 'asc' = oldest first, 'desc' = newest first
 const currentPage = ref(1);
@@ -421,6 +454,46 @@ const currentPage = ref(1);
 const { data, pending, error, refresh } = useFetch("/api/id-applications");
 
 const applications = computed(() => data.value?.applications || []);
+
+// --- Date Calculation Helpers ---
+const getDailyRange = () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return [start, end];
+};
+
+const getWeeklyRange = () => {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 is Sunday
+  const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+
+  const start = new Date(now);
+  start.setDate(now.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  return [start, end];
+};
+
+const getMonthlyRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
+  return [start, end];
+};
 
 // --- Helpers ---
 const formatFullName = (app) => {
@@ -453,25 +526,45 @@ const getStatusBadgeClass = (status) => {
 };
 
 // --- Actions ---
+const handlePresetChange = () => {
+  if (datePreset.value === "DAILY") {
+    dateRange.value = getDailyRange();
+  } else if (datePreset.value === "WEEKLY") {
+    dateRange.value = getWeeklyRange();
+  } else if (datePreset.value === "MONTHLY") {
+    dateRange.value = getMonthlyRange();
+  } else if (datePreset.value === "ALL") {
+    dateRange.value = [];
+  } else if (datePreset.value === "CUSTOM") {
+    if (!Array.isArray(dateRange.value) || dateRange.value.length < 2) {
+      dateRange.value = [];
+    }
+  }
+};
+
 const toggleSort = () => {
   sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
 };
 
 const clearFilters = () => {
   searchQuery.value = "";
+  selectedStatus.value = "ALL";
+  datePreset.value = "ALL";
   dateRange.value = [];
 };
 
 // --- Computed Properties ---
 const hasActiveFilters = computed(() => {
   const hasQuery = Boolean(searchQuery.value.trim());
+  const hasStatus = selectedStatus.value !== "ALL";
+  const hasPreset = datePreset.value !== "ALL";
   const hasValidDateRange =
     Array.isArray(dateRange.value) &&
     dateRange.value.length === 2 &&
     Boolean(dateRange.value[0]) &&
     Boolean(dateRange.value[1]);
 
-  return hasQuery || hasValidDateRange;
+  return hasQuery || hasStatus || hasPreset || hasValidDateRange;
 });
 
 const filteredApplications = computed(() => {
@@ -491,6 +584,15 @@ const filteredApplications = computed(() => {
 
   // 1. Filter
   const filtered = applications.value.filter((app) => {
+    // Status Filter
+    if (selectedStatus.value !== "ALL") {
+      const appStatus = app.status || "Pending Export";
+      if (appStatus.toLowerCase() !== selectedStatus.value.toLowerCase()) {
+        return false;
+      }
+    }
+
+    // Search Query Filter
     if (query) {
       const fullName = formatFullName(app).toLowerCase();
       const studId = (app.studid || "").toLowerCase();
@@ -508,6 +610,7 @@ const filteredApplications = computed(() => {
       if (!matches) return false;
     }
 
+    // Date Range Filter
     if (startTime !== null && endTime !== null) {
       if (!app.created_at) return false;
       const appTime = new Date(app.created_at).getTime();
@@ -590,9 +693,12 @@ const nextPage = () => {
 };
 
 // --- Watchers ---
-watch([searchQuery, dateRange, sortDirection], () => {
-  currentPage.value = 1;
-});
+watch(
+  [searchQuery, selectedStatus, datePreset, dateRange, sortDirection],
+  () => {
+    currentPage.value = 1;
+  },
+);
 
 watch(totalPages, (newTotal) => {
   if (currentPage.value > newTotal) {

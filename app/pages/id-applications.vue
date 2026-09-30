@@ -231,7 +231,6 @@
                 <th scope="col" class="py-3 px-4">Student</th>
                 <th scope="col" class="py-3 px-4">Course</th>
                 <th scope="col" class="py-3 px-4">Emergency Contact</th>
-                <th scope="col" class="py-3 px-4">Address</th>
                 <th
                   scope="col"
                   class="py-3 px-4 cursor-pointer hover:bg-slate-100/70 transition-colors select-none"
@@ -244,6 +243,7 @@
                   </span>
                 </th>
                 <th scope="col" class="py-3 px-4 text-center">ID Picture</th>
+                <th scope="col" class="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
 
@@ -280,14 +280,6 @@
                   </div>
                 </td>
 
-                <!-- Contact Address -->
-                <td
-                  class="py-3.5 px-4 max-w-xs truncate text-slate-600"
-                  :title="app.contact_address || undefined"
-                >
-                  {{ app.contact_address || "N/A" }}
-                </td>
-
                 <!-- Submitted Date -->
                 <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
                   {{ formatDate(app.created_at) }}
@@ -306,6 +298,18 @@
                     class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-400"
                   >
                     Pending
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium border',
+                      getStatusBadgeClass(app.status),
+                    ]"
+                  >
+                    {{ app.status || "Pending Export" }}
                   </span>
                 </td>
               </tr>
@@ -414,7 +418,6 @@ const sortDirection = ref("desc"); // 'asc' = oldest first, 'desc' = newest firs
 const currentPage = ref(1);
 
 // --- Data Fetching ---
-// Non-blocking fetch pattern (omitting top-level await lets loading skeleton render instantly)
 const { data, pending, error, refresh } = useFetch("/api/id-applications");
 
 const applications = computed(() => data.value?.applications || []);
@@ -432,6 +435,21 @@ const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
   return isNaN(date.getTime()) ? "N/A" : dateTimeFormatter.format(date);
+};
+
+// Dynamic Tailwind styling based on the status string
+const getStatusBadgeClass = (status) => {
+  if (!status) return "bg-amber-50 text-amber-800 border-amber-200";
+
+  const lower = status.toLowerCase();
+  if (
+    lower.includes("export") &&
+    !lower.includes("pending") &&
+    !lower.includes("not")
+  ) {
+    return "bg-emerald-50 text-emerald-800 border-emerald-200";
+  }
+  return "bg-amber-50 text-amber-800 border-amber-200";
 };
 
 // --- Actions ---
@@ -459,7 +477,6 @@ const hasActiveFilters = computed(() => {
 const filteredApplications = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
 
-  // Extract date boundary timestamps once per filter calculation
   let startTime = null;
   let endTime = null;
   if (
@@ -479,12 +496,14 @@ const filteredApplications = computed(() => {
       const studId = (app.studid || "").toLowerCase();
       const course = (app.course || "").toLowerCase();
       const contact = (app.contact_name || "").toLowerCase();
+      const status = (app.status || "").toLowerCase();
 
       const matches =
         fullName.includes(query) ||
         studId.includes(query) ||
         course.includes(query) ||
-        contact.includes(query);
+        contact.includes(query) ||
+        status.includes(query);
 
       if (!matches) return false;
     }
@@ -500,7 +519,7 @@ const filteredApplications = computed(() => {
     return true;
   });
 
-  // 2. Sort (create array copy to prevent unexpected side effects)
+  // 2. Sort
   const isAsc = sortDirection.value === "asc";
   return [...filtered].sort((a, b) => {
     const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -509,7 +528,6 @@ const filteredApplications = computed(() => {
 
     if (dateDiff !== 0) return dateDiff;
 
-    // Tie-breaker by ID
     const idA = Number(a.id) || 0;
     const idB = Number(b.id) || 0;
     return isAsc ? idA - idB : idB - idA;
@@ -572,12 +590,10 @@ const nextPage = () => {
 };
 
 // --- Watchers ---
-// Reset to page 1 whenever search, date filters, or sorting change
 watch([searchQuery, dateRange, sortDirection], () => {
   currentPage.value = 1;
 });
 
-// Ensure current page remains valid when total pages change
 watch(totalPages, (newTotal) => {
   if (currentPage.value > newTotal) {
     currentPage.value = newTotal;

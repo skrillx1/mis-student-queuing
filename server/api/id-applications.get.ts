@@ -14,7 +14,8 @@ export default defineEventHandler(async () => {
         contact_number, 
         contact_address, 
         created_at, 
-        id_picture_filename
+        id_picture_filename,
+        status
       FROM public.id_applications
       ORDER BY created_at DESC`,
     );

@@ -2,27 +2,30 @@ import { pool } from "../utils/db";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { studid, rfid } = body;
+  const { studid, rfid, fullname } = body;
 
-  // Check if student exists
-  const student = await pool.query("SELECT * FROM students WHERE studid = $1", [
-    studid,
-  ]);
-
-  if (student.rows.length === 0) {
-    return { status: "invalid_id" };
+  if (!studid || !fullname) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Missing required student information.",
+    });
   }
 
-  const s = student.rows[0];
+  // Upsert into csuccmisqueuing database
+  const query = `
+    INSERT INTO public.students (studid, rfidnumber, fullname)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (studid) 
+    DO UPDATE SET 
+      rfidnumber = COALESCE(NULLIF(EXCLUDED.rfidnumber, ''), public.students.rfidnumber),
+      fullname = EXCLUDED.fullname
+    RETURNING studid, rfidnumber, fullname;
+  `;
 
-  // Bind RFID
-  await pool.query("UPDATE students SET rfidnumber = $1 WHERE studid = $2", [
-    rfid,
-    studid,
-  ]);
+  const result = await pool.query(query, [studid, rfid || "", fullname]);
 
   return {
     status: "bound",
-    student: s,
+    student: result.rows[0],
   };
 });

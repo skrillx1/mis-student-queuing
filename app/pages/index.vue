@@ -79,22 +79,6 @@
       </div>
 
       <div class="z-10 w-full max-w-5xl">
-        <div class="z-10 text-center mb-3 sm:mb-4 shrink-0">
-          <div
-            class="inline-flex items-center gap-2 px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-full border border-emerald-800/15 bg-white/80 text-emerald-900 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] shadow-sm backdrop-blur-sm"
-          >
-            <span class="relative flex h-2 w-2">
-              <span
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"
-              ></span>
-              <span
-                class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"
-              ></span>
-            </span>
-            Queue Kiosk
-          </div>
-        </div>
-
         <div v-if="step === 'scan'" class="glass-card panel-shell text-center">
           <div class="flex justify-center mb-6">
             <div class="status-icon-wrap">
@@ -116,7 +100,6 @@
           </div>
 
           <div class="space-y-3 mb-6">
-            <div class="chip">Queue Kiosk</div>
             <h2 class="text-3xl sm:text-4xl font-black text-emerald-950">
               Ready to Scan
             </h2>
@@ -210,8 +193,12 @@
             <div class="avatar-badge">
               {{ claimForm.firstname?.charAt(0) || "S" }}
             </div>
+            <!-- Inside step === 'confirm' and step === 'found' -->
             <h3 class="text-2xl font-black text-emerald-950">
-              {{ claimForm.firstname }} {{ claimForm.lastname }}
+              {{
+                student?.fullname ||
+                `${student?.firstname || ""} ${student?.lastname || ""}`
+              }}
             </h3>
             <p class="text-sm text-slate-500">{{ claimForm.studid }}</p>
           </div>
@@ -263,8 +250,12 @@
             <div class="avatar-badge">
               {{ student?.firstname?.charAt(0) || "S" }}
             </div>
+            <!-- Inside step === 'confirm' and step === 'found' -->
             <h3 class="text-2xl font-black text-emerald-950">
-              {{ student?.firstname }} {{ student?.lastname }}
+              {{
+                student?.fullname ||
+                `${student?.firstname || ""} ${student?.lastname || ""}`
+              }}
             </h3>
             <p class="text-sm text-slate-500">{{ student?.studid }}</p>
           </div>
@@ -600,46 +591,52 @@ const scanRFID = async () => {
 
 const manualEntry = () => (step.value = "input");
 
-/* ================= STUDENT ================= */
+/* ================= STUDENT LOOKUP ================= */
 const checkStudent = async () => {
   if (!studid.value) return;
 
-  const res = await $fetch("/api/scan-studid", {
-    method: "POST",
-    body: { studid: studid.value },
-  });
+  try {
+    const res = await $fetch("/api/scan-studid", {
+      method: "POST",
+      body: { studid: studid.value },
+    });
 
-  if (res.status !== "found") {
-    alert("Student record not found.");
-    return;
+    if (res.status !== "found") {
+      alert("Student ID not found in enrolment database.");
+      return;
+    }
+
+    student.value = res.student;
+    step.value = "confirm";
+  } catch (error) {
+    alert("Failed to query enrolment record.");
   }
-
-  student.value = res.student;
-  step.value = "confirm";
 };
 
 /* ================= CONFIRMATION & BINDING ================= */
 const confirmBinding = async () => {
-  if (lastScannedRFID.value) {
+  try {
     const bindRes = await $fetch("/api/bind", {
       method: "POST",
       body: {
         studid: student.value.studid,
-        rfid: lastScannedRFID.value,
+        fullname: student.value.fullname,
+        rfid: lastScannedRFID.value || "",
       },
     });
 
     if (bindRes.status !== "bound") {
-      alert("Failed to bind RFID.");
+      alert("Failed to store student record.");
       return;
     }
 
     student.value = bindRes.student;
+    step.value = "found";
+    studid.value = "";
+    lastScannedRFID.value = "";
+  } catch (error) {
+    alert("Error saving student to queuing database.");
   }
-
-  step.value = "found";
-  studid.value = "";
-  lastScannedRFID.value = "";
 };
 
 /* ================= SERVICE ================= */

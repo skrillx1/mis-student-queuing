@@ -4,9 +4,13 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { rfid } = body;
 
-  // 1. Check if RFID exists
+  if (!rfid) {
+    return { status: "not_found" };
+  }
+
+  // Look for existing student bound to this RFID in csuccmisqueuing DB
   const result = await pool.query(
-    "SELECT * FROM students WHERE rfidnumber = $1",
+    "SELECT studid, rfidnumber, fullname FROM public.students WHERE rfidnumber = $1 LIMIT 1",
     [rfid],
   );
 
@@ -17,7 +21,6 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  // RFID not found
   return {
     status: "not_found",
   };

@@ -79,6 +79,7 @@
       </div>
 
       <div class="z-10 w-full max-w-5xl">
+        <!-- SCAN STEP -->
         <div v-if="step === 'scan'" class="glass-card panel-shell text-center">
           <div class="flex justify-center mb-6">
             <div class="status-icon-wrap">
@@ -135,11 +136,12 @@
           </div>
         </div>
 
+        <!-- CLAIM STUDENT ID - ENTER ID -->
         <div v-else-if="step === 'claim'" class="glass-card panel-shell">
           <div class="section-header">
             <div>
               <p class="eyebrow">Claim Student ID</p>
-              <h2 class="page-title">Enter your details</h2>
+              <h2 class="page-title">Enter Student ID Number</h2>
             </div>
             <button @click="step = 'scan'" class="text-btn">Back</button>
           </div>
@@ -149,26 +151,10 @@
               Student ID number
               <input
                 v-model="claimForm.studid"
+                @keyup.enter="reviewClaimForm"
                 placeholder="e.g. 2023-0001"
                 class="form-input"
-              />
-            </label>
-
-            <label class="field-label">
-              First name
-              <input
-                v-model="claimForm.firstname"
-                placeholder="First name"
-                class="form-input"
-              />
-            </label>
-
-            <label class="field-label">
-              Last name
-              <input
-                v-model="claimForm.lastname"
-                placeholder="Last name"
-                class="form-input"
+                autofocus
               />
             </label>
 
@@ -176,36 +162,42 @@
               @click="reviewClaimForm"
               class="primary-btn action-btn w-full"
             >
-              Continue
+              Verify Student
             </button>
           </div>
         </div>
 
+        <!-- CLAIM STUDENT ID - VERIFY NAME -->
         <div v-else-if="step === 'claim-review'" class="glass-card panel-shell">
           <div class="section-header center-align">
             <div>
-              <p class="eyebrow">Verify details</p>
+              <p class="eyebrow">Verify Student Details</p>
               <h2 class="page-title">Is this correct?</h2>
             </div>
           </div>
 
           <div class="confirm-card mt-6">
             <div class="avatar-badge">
-              {{ claimForm.firstname?.charAt(0) || "S" }}
+              {{
+                student?.fullname?.charAt(0) ||
+                student?.firstname?.charAt(0) ||
+                "S"
+              }}
             </div>
-            <!-- Inside step === 'confirm' and step === 'found' -->
             <h3 class="text-2xl font-black text-emerald-950">
               {{
                 student?.fullname ||
-                `${student?.firstname || ""} ${student?.lastname || ""}`
+                `${student?.firstname || ""} ${student?.lastname || ""}`.trim()
               }}
             </h3>
-            <p class="text-sm text-slate-500">{{ claimForm.studid }}</p>
+            <p class="text-sm text-slate-500 font-mono mt-1">
+              {{ student?.studid }}
+            </p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
             <button @click="step = 'claim'" class="action-btn danger-btn">
-              No, edit
+              No, go back
             </button>
             <button @click="confirmClaimRequest" class="action-btn primary-btn">
               Yes, correct
@@ -213,6 +205,7 @@
           </div>
         </div>
 
+        <!-- MANUAL ENTRY STEP -->
         <div v-else-if="step === 'input'" class="glass-card panel-shell">
           <div class="section-header">
             <div>
@@ -238,6 +231,7 @@
           </div>
         </div>
 
+        <!-- CONFIRM BINDING STEP -->
         <div v-else-if="step === 'confirm'" class="glass-card panel-shell">
           <div class="section-header center-align">
             <div>
@@ -248,16 +242,21 @@
 
           <div class="confirm-card mt-6">
             <div class="avatar-badge">
-              {{ student?.firstname?.charAt(0) || "S" }}
+              {{
+                student?.fullname?.charAt(0) ||
+                student?.firstname?.charAt(0) ||
+                "S"
+              }}
             </div>
-            <!-- Inside step === 'confirm' and step === 'found' -->
             <h3 class="text-2xl font-black text-emerald-950">
               {{
                 student?.fullname ||
-                `${student?.firstname || ""} ${student?.lastname || ""}`
+                `${student?.firstname || ""} ${student?.lastname || ""}`.trim()
               }}
             </h3>
-            <p class="text-sm text-slate-500">{{ student?.studid }}</p>
+            <p class="text-sm text-slate-500 font-mono mt-1">
+              {{ student?.studid }}
+            </p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
@@ -270,17 +269,31 @@
           </div>
         </div>
 
+        <!-- FOUND / CHOOSE SERVICE STEP -->
         <div v-else-if="step === 'found'" class="glass-card panel-shell">
           <div class="section-header">
             <div class="flex items-center gap-3 min-w-0">
               <div class="avatar-badge">
-                {{ student?.firstname?.charAt(0) || "S" }}
+                {{
+                  student?.fullname?.charAt(0) ||
+                  student?.firstname?.charAt(0) ||
+                  "S"
+                }}
               </div>
               <div class="min-w-0">
                 <p class="eyebrow">Welcome back</p>
                 <h2 class="page-title truncate">
-                  {{ student?.firstname }} {{ student?.lastname }}
+                  {{
+                    student?.fullname ||
+                    `${student?.firstname || ""} ${student?.lastname || ""}`.trim()
+                  }}
                 </h2>
+                <p
+                  v-if="student?.studid"
+                  class="text-xs text-slate-500 font-mono"
+                >
+                  {{ student.studid }}
+                </p>
               </div>
             </div>
             <button @click="cancelSelection" class="text-btn danger-text">
@@ -306,6 +319,7 @@
           </div>
         </div>
 
+        <!-- ID PROCESSING FORM -->
         <div v-else-if="step === 'form'" class="glass-card panel-shell">
           <div class="section-header">
             <div>
@@ -373,6 +387,7 @@
           </button>
         </div>
 
+        <!-- RESULT STEP -->
         <div
           v-else-if="step === 'result'"
           class="glass-card panel-shell text-center"
@@ -495,12 +510,10 @@ const form = reactive({
 });
 
 const claimForm = reactive({
-  firstname: "",
-  lastname: "",
   studid: "",
 });
 
-// Disable default layout (AppHeader and AppSidebar) for this page
+// Disable default layout for this page
 definePageMeta({
   layout: false,
 });
@@ -511,39 +524,59 @@ const startIdProcessing = () => {
   step.value = "form";
 };
 
-/* ================= CLAIM STUDENT ID ================= */
+/* ================= CLAIM STUDENT ID FLOW ================= */
 const claimStudentId = () => {
-  claimForm.firstname = "";
-  claimForm.lastname = "";
   claimForm.studid = "";
+  student.value = null;
   step.value = "claim";
 };
 
-const reviewClaimForm = () => {
-  if (!claimForm.studid || !claimForm.firstname || !claimForm.lastname) {
-    alert("Please enter your student ID number, first name, and last name.");
+const reviewClaimForm = async () => {
+  if (!claimForm.studid) {
+    alert("Please enter your student ID number.");
     return;
   }
 
-  step.value = "claim-review";
+  try {
+    const res = await $fetch("/api/scan-studid", {
+      method: "POST",
+      body: { studid: claimForm.studid },
+    });
+
+    if (res.status !== "found") {
+      alert("Student ID not found in database.");
+      return;
+    }
+
+    student.value = res.student;
+    step.value = "claim-review";
+  } catch (error) {
+    alert("Failed to query student record.");
+  }
 };
 
 const confirmClaimRequest = async () => {
-  const res = await $fetch("/api/queue", {
-    method: "POST",
-    body: {
-      service: "Claim Student ID",
-      studid: claimForm.studid || null,
-      firstname: claimForm.firstname,
-      middlename: "",
-      lastname: claimForm.lastname,
-    },
-  });
+  if (!student.value) return;
 
-  queueNumber.value = res.queueNumber;
-  step.value = "result";
-  startCountdown();
-  Object.keys(claimForm).forEach((key) => (claimForm[key] = ""));
+  try {
+    const res = await $fetch("/api/queue", {
+      method: "POST",
+      body: {
+        service: "Claim Student ID",
+        studid: student.value.studid || claimForm.studid,
+        firstname: student.value.firstname || "",
+        middlename: student.value.middlename || "",
+        lastname: student.value.lastname || "",
+      },
+    });
+
+    queueNumber.value = res.queueNumber;
+    step.value = "result";
+    startCountdown();
+    claimForm.studid = "";
+  } catch (error) {
+    alert("Failed to generate ticket. Please try again.");
+  }
 };
 
 /* ================= CONSTANTS ================= */
@@ -565,7 +598,7 @@ const resetState = () => {
   studid.value = "";
   rfid.value = "";
   queueNumber.value = null;
-  Object.keys(claimForm).forEach((key) => (claimForm[key] = ""));
+  claimForm.studid = "";
   clearForm();
   focusRFID();
 };
@@ -661,7 +694,6 @@ const createQueue = async (service) => {
     body: {
       service,
       studid: student.value?.studid || form.studid || null,
-
       firstname: student.value?.firstname || form.firstname,
       middlename: student.value?.middlename || form.middlename,
       lastname: student.value?.lastname || form.lastname,

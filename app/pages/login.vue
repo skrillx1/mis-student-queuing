@@ -171,12 +171,18 @@ const handleLogin = async () => {
     );
 
     if (response?.error) {
-      errorMessage.value = "Invalid username or password";
+      errorMessage.value = response.error.includes("inactive")
+        ? response.error
+        : "Invalid username or password";
     } else {
       await navigateTo("/dashboard");
     }
   } catch (err: any) {
-    errorMessage.value = "Invalid login credentials";
+    const message =
+      err?.data?.statusMessage || err?.statusMessage || err?.message || "";
+    errorMessage.value = message.toLowerCase().includes("inactive")
+      ? message
+      : "Invalid username or password";
   } finally {
     loading.value = false;
   }

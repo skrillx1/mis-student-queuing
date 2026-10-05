@@ -19,6 +19,7 @@ const currentUser = computed(() => authData.value ?? {});
 const users = ref([]);
 const isLoading = ref(true);
 const isSaving = ref(false);
+const updatingUserId = ref(null);
 const showAddModal = ref(false);
 const searchQuery = ref("");
 const errorMessage = ref("");
@@ -39,8 +40,8 @@ const filteredUsers = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return users.value;
   return users.value.filter((user) =>
-    [user.username, user.name, user.email, user.role].some((value) =>
-      value?.toLowerCase().includes(query),
+    [user.username, user.name, user.email, user.role, user.status].some(
+      (value) => value?.toLowerCase().includes(query),
     ),
   );
 });
@@ -57,6 +58,30 @@ const fetchUsers = async () => {
     errorMessage.value = error?.data?.statusMessage || "Unable to load users.";
   } finally {
     isLoading.value = false;
+  }
+};
+
+const updateUserStatus = async (user, status) => {
+  errorMessage.value = "";
+  successMessage.value = "";
+  updatingUserId.value = user.id;
+
+  try {
+    await $fetch(`/api/auth/users/${user.id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer session-token-${currentUser.value.id}`,
+      },
+      body: { status },
+    });
+    user.status = status;
+    successMessage.value = `Account status updated to ${status}.`;
+  } catch (error) {
+    errorMessage.value =
+      error?.data?.statusMessage || "Unable to update account status.";
+    await fetchUsers();
+  } finally {
+    updatingUserId.value = null;
   }
 };
 
@@ -183,16 +208,17 @@ onMounted(() => {
               <th class="px-5 py-3">Username</th>
               <th class="px-5 py-3">Email</th>
               <th class="px-5 py-3">Role</th>
+              <th class="px-5 py-3">Account status</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <tr v-if="isLoading">
-              <td colspan="4" class="px-5 py-10 text-center text-slate-400">
+              <td colspan="5" class="px-5 py-10 text-center text-slate-400">
                 Loading users...
               </td>
             </tr>
             <tr v-else-if="filteredUsers.length === 0">
-              <td colspan="4" class="px-5 py-10 text-center text-slate-400">
+              <td colspan="5" class="px-5 py-10 text-center text-slate-400">
                 No users found.
               </td>
             </tr>
@@ -212,6 +238,19 @@ onMounted(() => {
                     class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800"
                     >{{ user.role }}</span
                   >
+                </td>
+                <td class="px-5 py-3">
+                  <select
+                    :value="user.status"
+                    :disabled="updatingUserId === user.id"
+                    :aria-label="`Account status for ${user.username}`"
+                    class="ui-input min-w-32 py-1.5 text-xs"
+                    @change="updateUserStatus(user, $event.target.value)"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                  </select>
                 </td>
               </tr>
             </template>

@@ -13,11 +13,10 @@ export default defineEventHandler(async (event) => {
   try {
     // Query database and verify password using PostgreSQL's crypt function
     const query = `
-      SELECT id, username, email, full_name, role, is_active
+      SELECT id, username, email, full_name, role, is_active, status
       FROM users
       WHERE username = $1 
         AND password_hash = crypt($2, password_hash)
-        AND is_active = TRUE
     `;
     const { rows } = await pool.query(query, [username, password]);
 
@@ -29,6 +28,21 @@ export default defineEventHandler(async (event) => {
     }
 
     const user = rows[0];
+
+    if (user.status === "inactive") {
+      throw createError({
+        statusCode: 403,
+        statusMessage:
+          "Your account is inactive. Please contact the administrator to activate your account.",
+      });
+    }
+
+    if (!user.is_active) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Invalid username or password",
+      });
+    }
 
     // Update last login timestamp asynchronously
     await pool.query("UPDATE users SET last_login_at = NOW() WHERE id = $1", [

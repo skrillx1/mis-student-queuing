@@ -1,4 +1,4 @@
-import { pool } from "../../utils/db";
+import { pool } from "../../../utils/db";
 
 const getAuthorizedAdminId = (event) => {
   const token = getHeader(event, "authorization")?.replace("Bearer ", "");
@@ -22,8 +22,23 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Administrator access required.",
     });
 
+  const userId = getRouterParam(event, "id");
+  const { status } = (await readBody(event)) || {};
+  const validStatuses = ["active", "inactive", "pending"];
+
+  if (!userId || !validStatuses.includes(status))
+    throw createError({
+      statusCode: 400,
+      statusMessage: "A valid user ID and account status are required.",
+    });
+
   const result = await pool.query(
-    "SELECT id, username, email, full_name AS name, role, is_active, status FROM users ORDER BY full_name NULLS LAST, username",
+    "UPDATE users SET status = $1 WHERE id = $2 RETURNING id, status",
+    [status, userId],
   );
-  return result.rows;
+
+  if (result.rowCount === 0)
+    throw createError({ statusCode: 404, statusMessage: "User not found." });
+
+  return result.rows[0];
 });

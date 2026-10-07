@@ -444,6 +444,7 @@
 
                   <input
                     v-model="form.firstname"
+                    @input="form.firstname = form.firstname.toUpperCase()"
                     type="text"
                     placeholder="e.g. Juan"
                     class="form-input w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
@@ -458,6 +459,7 @@
 
                   <input
                     v-model="form.middlename"
+                    @input="form.middlename = form.middlename.toUpperCase()"
                     type="text"
                     placeholder="e.g. Santos"
                     class="form-input w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
@@ -472,6 +474,7 @@
 
                   <input
                     v-model="form.lastname"
+                    @input="form.lastname = form.lastname.toUpperCase()"
                     type="text"
                     placeholder="e.g. Dela Cruz"
                     class="form-input w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
@@ -673,18 +676,116 @@
                   />
                 </div>
 
-                <div class="md:col-span-2">
-                  <label class="block text-xs font-bold text-slate-600 mb-1.5">
-                    Complete Address
-                    <span class="text-rose-500">*</span>
-                  </label>
+                <div class="md:col-span-2 space-y-4">
+                  <!-- Cascading Dropdowns Grid -->
+                  <div
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+                  >
+                    <!-- Province -->
+                    <div class="flex flex-col justify-between">
+                      <label
+                        class="block text-xs font-bold text-slate-600 mb-1.5"
+                      >
+                        Province <span class="text-rose-500">*</span>
+                      </label>
+                      <select
+                        v-model="selectedProvince"
+                        @change="onProvinceChange"
+                        class="form-select w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Province
+                        </option>
+                        <option
+                          v-for="item in provinces"
+                          :key="item.code"
+                          :value="item"
+                        >
+                          {{ item.name }}
+                        </option>
+                      </select>
+                    </div>
 
+                    <!-- Municipality / City -->
+                    <div class="flex flex-col justify-between">
+                      <label
+                        class="block text-xs font-bold text-slate-600 mb-1.5"
+                      >
+                        Municipality / City <span class="text-rose-500">*</span>
+                      </label>
+                      <select
+                        v-model="selectedMunicipality"
+                        @change="onMunicipalityChange"
+                        :disabled="!selectedProvince"
+                        class="form-select w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition disabled:bg-slate-100 disabled:cursor-not-allowed"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Municipality
+                        </option>
+                        <option
+                          v-for="item in municipalities"
+                          :key="item.code"
+                          :value="item"
+                        >
+                          {{ item.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Barangay -->
+                    <div class="flex flex-col justify-between">
+                      <label
+                        class="block text-xs font-bold text-slate-600 mb-1.5"
+                      >
+                        Barangay <span class="text-rose-500">*</span>
+                      </label>
+                      <select
+                        v-model="selectedBarangay"
+                        @change="updateFullAddress"
+                        :disabled="!selectedMunicipality"
+                        class="form-select w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition disabled:bg-slate-100 disabled:cursor-not-allowed"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Barangay
+                        </option>
+                        <option
+                          v-for="item in barangays"
+                          :key="item.code"
+                          :value="item"
+                        >
+                          {{ item.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Street -->
+                    <div class="flex flex-col justify-between">
+                      <label
+                        class="block text-xs font-bold text-slate-600 mb-1.5"
+                      >
+                        Street / Subd / Bldg
+                        <span class="text-rose-500">*</span>
+                      </label>
+                      <input
+                        v-model="streetName"
+                        @input="updateFullAddress"
+                        type="text"
+                        placeholder="e.g. Rizal St."
+                        :disabled="!selectedBarangay"
+                        class="form-input w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition disabled:bg-slate-100 disabled:cursor-not-allowed"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Hidden input holding the final string for form submissions -->
                   <input
+                    type="hidden"
                     v-model="form.contact_address"
-                    type="text"
-                    placeholder="House / Street / Barangay / Municipality / Province"
-                    class="form-input w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white/90 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-                    required
+                    name="contact_address"
                   />
                 </div>
               </div>
@@ -990,6 +1091,93 @@ const courseList = [
   },
 ];
 
+// Options list
+const provinces = ref([]);
+const municipalities = ref([]);
+const barangays = ref([]);
+
+// Selected objects
+const selectedProvince = ref("");
+const selectedMunicipality = ref("");
+const selectedBarangay = ref("");
+const streetName = ref("");
+
+// 1. Load Philippine Provinces on Mount
+onMounted(async () => {
+  try {
+    const res = await fetch("https://psgc.gitlab.io/api/provinces.json");
+    provinces.value = await res.json();
+    // Sort alphabetically
+    provinces.value.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (err) {
+    console.error("Failed to load Philippine provinces:", err);
+  }
+});
+
+// 2. Fetch Municipalities when Province changes
+const onProvinceChange = async () => {
+  selectedMunicipality.value = "";
+  selectedBarangay.value = "";
+  municipalities.value = [];
+  barangays.value = [];
+
+  if (!selectedProvince.value) return;
+
+  try {
+    const res = await fetch(
+      `https://psgc.gitlab.io/api/provinces/${selectedProvince.value.code}/cities-municipalities.json`,
+    );
+    municipalities.value = await res.json();
+    municipalities.value.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (err) {
+    console.error("Failed to load municipalities:", err);
+  }
+
+  updateFullAddress();
+};
+
+// 3. Fetch Barangays when Municipality changes
+const onMunicipalityChange = async () => {
+  selectedBarangay.value = "";
+  barangays.value = [];
+
+  if (!selectedMunicipality.value) return;
+
+  try {
+    const res = await fetch(
+      `https://psgc.gitlab.io/api/cities-municipalities/${selectedMunicipality.value.code}/barangays.json`,
+    );
+    barangays.value = await res.json();
+    barangays.value.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (err) {
+    console.error("Failed to load barangays:", err);
+  }
+
+  updateFullAddress();
+};
+
+// 4. Update form.contact_address string format
+const updateFullAddress = () => {
+  const parts = [
+    streetName.value.trim(),
+    selectedBarangay.value?.name,
+    selectedMunicipality.value?.name,
+    selectedProvince.value?.name,
+  ].filter(Boolean);
+
+  form.contact_address = parts.join(", ");
+};
+
+const clearAddress = () => {
+  selectedProvince.value = "";
+  selectedMunicipality.value = "";
+  selectedBarangay.value = "";
+  municipalities.value = [];
+  barangays.value = [];
+  streetName.value = "";
+  form.contact_address = "";
+};
+
 const filteredCourses = computed(() => {
   const query = String(form.course || "")
     .trim()
@@ -1232,6 +1420,7 @@ const submitIdProcessing = async () => {
     body: form,
   });
 
+  clearAddress();
   await createQueue("ID Processing");
 };
 

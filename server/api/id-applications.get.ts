@@ -5,9 +5,7 @@ export default defineEventHandler(async () => {
     const result = await pool.query(
       `SELECT 
         id, 
-        firstname, 
-        middlename, 
-        lastname, 
+        fullname,
         studid, 
         course, 
         contact_name, 

@@ -14,23 +14,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // UPPER converts full_name, contact_name, and contact_address to ALL CAPS
+    // UPPER converts personal and contact text fields to ALL CAPS.
     const query = `
       SELECT 
         id, 
-        UPPER(
-          TRIM(
-            CONCAT_WS(' ', 
-              TRIM(firstname), 
-              CASE 
-                WHEN middlename IS NOT NULL AND TRIM(middlename) <> '' 
-                THEN LEFT(TRIM(middlename), 1) || '.' 
-                ELSE NULL 
-              END, 
-              TRIM(lastname)
-            )
-          )
-        ) AS full_name, 
+        UPPER(TRIM(fullname)) AS full_name,
         studid, 
         course, 
         UPPER(TRIM(contact_name)) AS contact_name, 

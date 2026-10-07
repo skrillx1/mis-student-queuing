@@ -600,9 +600,7 @@ const escapeCsvValue = (val) => {
 const generateAndDownloadCsv = (items) => {
   const headers = [
     "ID",
-    "First Name",
-    "Middle Name",
-    "Last Name",
+    "Full Name",
     "Student ID",
     "Course",
     "Contact Name",
@@ -614,9 +612,7 @@ const generateAndDownloadCsv = (items) => {
 
   const rows = items.map((app) => [
     escapeCsvValue(app.id),
-    escapeCsvValue(app.firstname),
-    escapeCsvValue(app.middlename),
-    escapeCsvValue(app.lastname),
+    escapeCsvValue(app.fullname),
     escapeCsvValue(app.studid),
     escapeCsvValue(app.course),
     escapeCsvValue(app.contact_name),
@@ -744,10 +740,7 @@ const getMonthlyRange = () => {
 // --- Helpers ---
 const formatFullName = (app) => {
   if (!app) return "No Name Provided";
-  const nameParts = [app.firstname, app.middlename, app.lastname].filter(
-    Boolean,
-  );
-  return nameParts.join(" ") || "No Name Provided";
+  return app.fullname || "No Name Provided";
 };
 
 const formatDate = (dateString) => {

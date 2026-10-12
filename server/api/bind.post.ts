@@ -11,18 +11,21 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // Convert empty string/falsy rfid to null
+  const rfidValue = rfid && rfid.trim() !== "" ? rfid.trim() : null;
+
   // Upsert into csuccmisqueuing database
   const query = `
     INSERT INTO public.students (studid, rfidnumber, fullname)
     VALUES ($1, $2, $3)
     ON CONFLICT (studid) 
     DO UPDATE SET 
-      rfidnumber = COALESCE(NULLIF(EXCLUDED.rfidnumber, ''), public.students.rfidnumber),
+      rfidnumber = COALESCE(EXCLUDED.rfidnumber, public.students.rfidnumber),
       fullname = EXCLUDED.fullname
     RETURNING studid, rfidnumber, fullname;
   `;
 
-  const result = await pool.query(query, [studid, rfid || "", fullname]);
+  const result = await pool.query(query, [studid, rfidValue, fullname]);
 
   return {
     status: "bound",

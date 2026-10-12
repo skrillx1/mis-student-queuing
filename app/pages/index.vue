@@ -1311,20 +1311,34 @@ const scanRFID = async () => {
 
   lastScannedRFID.value = rfid.value;
 
-  const res = await $fetch("/api/scan", {
-    method: "POST",
-    body: {
-      rfid: rfid.value,
-    },
-  });
+  try {
+    const res = await $fetch("/api/scan", {
+      method: "POST",
+      body: {
+        rfid: rfid.value,
+      },
+    });
 
-  student.value = res.status === "found" ? res.student : null;
-  step.value = res.status === "found" ? "found" : "input";
+    if (res.status === "found" && res.student) {
+      // Ensure name properties are populated if only fullname exists
+      student.value = formatStudentData(res.student);
+      step.value = "found";
+    } else {
+      student.value = null;
+      step.value = "input";
+    }
+  } catch (error) {
+    console.error("RFID scan failed:", error);
+    student.value = null;
+    step.value = "input";
+  }
 
   rfid.value = "";
 };
 
 const manualEntry = () => {
+  lastScannedRFID.value = ""; // Clear lingering scan data if manually entered
+  student.value = null;
   step.value = "input";
 };
 
@@ -1340,12 +1354,12 @@ const checkStudent = async () => {
       },
     });
 
-    if (res.status !== "found") {
+    if (res.status !== "found" || !res.student) {
       alert("Student ID not found in enrolment database.");
       return;
     }
 
-    student.value = res.student;
+    student.value = formatStudentData(res.student);
     step.value = "confirm";
   } catch (error) {
     alert("Failed to query enrolment record.");
@@ -1354,12 +1368,21 @@ const checkStudent = async () => {
 
 /* ================= CONFIRMATION & BINDING ================= */
 const confirmBinding = async () => {
+  if (!student.value) return;
+
+  // Build a fallback full name if student object doesn't have a direct fullname property
+  const computedFullName =
+    student.value.fullname ||
+    [student.value.firstname, student.value.middlename, student.value.lastname]
+      .filter(Boolean)
+      .join(" ");
+
   try {
     const bindRes = await $fetch("/api/bind", {
       method: "POST",
       body: {
         studid: student.value.studid,
-        fullname: student.value.fullname,
+        fullname: computedFullName,
         rfid: lastScannedRFID.value || "",
       },
     });
@@ -1369,13 +1392,43 @@ const confirmBinding = async () => {
       return;
     }
 
-    student.value = bindRes.student;
+    student.value = formatStudentData(bindRes.student);
     step.value = "found";
     studid.value = "";
     lastScannedRFID.value = "";
   } catch (error) {
     alert("Error saving student to queuing database.");
   }
+};
+
+/* ================= HELPER FOR NAME NORMALIZATION ================= */
+const formatStudentData = (stud) => {
+  if (!stud) return null;
+
+  let firstname = stud.firstname || "";
+  let middlename = stud.middlename || "";
+  let lastname = stud.lastname || "";
+
+  // If firstname/lastname are missing but fullname exists, split fullname
+  if ((!firstname || !lastname) && stud.fullname) {
+    const parts = stud.fullname.trim().split(" ");
+    if (parts.length === 1) {
+      firstname = parts[0];
+    } else if (parts.length >= 2) {
+      firstname = parts[0];
+      lastname = parts.slice(1).join(" ");
+    }
+  }
+
+  return {
+    ...stud,
+    firstname,
+    middlename,
+    lastname,
+    fullname:
+      stud.fullname ||
+      [firstname, middlename, lastname].filter(Boolean).join(" "),
+  };
 };
 
 /* ================= SERVICE ================= */

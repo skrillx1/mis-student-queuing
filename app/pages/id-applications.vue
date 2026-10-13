@@ -400,6 +400,9 @@
                   <div class="text-[11px] text-slate-500 font-mono">
                     {{ app.contact_number || "N/A" }}
                   </div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">
+                    {{ app.contact_address || "N/A" }}
+                  </div>
                 </td>
 
                 <!-- Submitted Date -->

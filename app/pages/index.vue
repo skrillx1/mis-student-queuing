@@ -959,6 +959,14 @@ const showCourseDropdown = ref(false);
 
 const courseList = [
   {
+    code: "JHS",
+    label: "JUNIOR HIGH SCHOOL",
+  },
+  {
+    code: "SHS",
+    label: "SENIOR HIGH SCHOOL",
+  },
+  {
     code: "BSA",
     label: "BACHELOR OF SCIENCE IN ACCOUNTANCY",
   },
